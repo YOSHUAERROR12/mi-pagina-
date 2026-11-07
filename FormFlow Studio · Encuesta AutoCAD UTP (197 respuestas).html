@@ -1,0 +1,2154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormFlow Studio | Creador de Encuestas Web Moderno</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <!-- Font Awesome Icons -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+    <!-- SheetJS para exportar archivos Excel (.xlsx) reales -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        jakarta: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        serif: ['Merriweather', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --accent-light: #eef2ff;
+            --accent-border: #c7d2fe;
+            --bg-page: #f8fafc;
+        }
+        body {
+            background-color: var(--bg-page);
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+        .dark body {
+            --bg-page: #0f172a;
+        }
+        .accent-bg { background-color: var(--accent); }
+        .accent-bg-hover:hover { background-color: var(--accent-hover); }
+        .accent-text { color: var(--accent); }
+        .accent-border { border-color: var(--accent); }
+        .accent-light-bg { background-color: var(--accent-light); }
+
+        @keyframes fadeInSlide {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-card {
+            animation: fadeInSlide 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="font-jakarta text-slate-800 dark:text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <!-- =================================================================== -->
+    <!-- BARRA DE NAVEGACIÓN SUPERIOR (ESTILO ORIGINAL + PROYECTOS Y LOGIN)  -->
+    <!-- =================================================================== -->
+    <header id="mainHeader" class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+            <!-- Izquierda: Logo FormFlow Studio + Botón "Proyectos / Formularios" -->
+            <div class="flex items-center gap-3 min-w-0">
+                <div onclick="openDashboardHome()" class="flex items-center gap-2.5 cursor-pointer group shrink-0" title="Ir al apartado principal de Proyectos y Formularios">
+                    <div class="w-9 h-9 rounded-xl accent-bg flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-layer-group text-base"></i>
+                    </div>
+                    <div class="hidden sm:block">
+                        <span class="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white block leading-none">FormFlow</span>
+                        <span class="text-[10px] font-semibold accent-text tracking-wider uppercase">Studio</span>
+                    </div>
+                </div>
+
+                <button onclick="openDashboardHome()" id="btnNavProjects" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition flex items-center gap-1.5 shrink-0 border border-slate-200/70 dark:border-slate-700">
+                    <i class="fa-regular fa-folder-open accent-text"></i>
+                    <span>Proyectos</span>
+                    <span id="navProjectsCount" class="px-1.5 py-0.2 rounded-full bg-white dark:bg-slate-900 text-[10px] font-extrabold text-slate-600 dark:text-slate-300">1</span>
+                </button>
+
+                <div class="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 hidden md:block"></div>
+
+                <div class="truncate hidden md:block">
+                    <span id="navFormTitle" class="font-semibold text-xs sm:text-sm text-slate-700 dark:text-slate-200 truncate block max-w-[240px] lg:max-w-[320px]">Mis Proyectos y Formularios</span>
+                </div>
+            </div>
+
+            <!-- Centro: Las 3 Pestañas del Formulario Activo (Preguntas | Vista Previa | Respuestas) -->
+            <nav id="formEditorTabs" class="hidden items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700">
+                <button onclick="switchTab('builder')" id="tab-builder" class="tab-btn px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 bg-white dark:bg-slate-900 shadow-sm accent-text">
+                    <i class="fa-solid fa-pen-ruler"></i>
+                    <span>Preguntas</span>
+                </button>
+                <button onclick="switchTab('preview')" id="tab-preview" class="tab-btn px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900">
+                    <i class="fa-solid fa-eye"></i>
+                    <span>Vista Previa</span>
+                </button>
+                <button onclick="switchTab('responses')" id="tab-responses" class="tab-btn px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Respuestas</span>
+                    <span id="navResponseBadge" class="px-1.5 py-0.2 rounded-full text-[11px] font-bold accent-bg text-white">197</span>
+                </button>
+            </nav>
+
+            <!-- Derecha: Paleta de Estilo + Modo Oscuro + Botón de Login al Costado -->
+            <div class="flex items-center gap-2 shrink-0">
+                <!-- Botón Paleta de Personalización Visual -->
+                <button onclick="toggleThemeDrawer()" title="Personalizar colores y tipografía" class="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition border border-slate-200/80 dark:border-slate-700">
+                    <i class="fa-solid fa-palette text-sm accent-text"></i>
+                </button>
+
+                <!-- Botón Modo Oscuro -->
+                <button onclick="toggleDarkMode()" title="Alternar Modo Claro / Oscuro" class="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition border border-slate-200/80 dark:border-slate-700">
+                    <i class="fa-solid fa-moon text-sm"></i>
+                </button>
+
+                <!-- A UN COSTADO: Botón de Iniciar Sesión / Cuenta -->
+                <div class="relative">
+                    <button onclick="toggleLoginModal()" id="headerAccountBtn" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-400 bg-white dark:bg-slate-800 transition flex items-center gap-2 shadow-2xs">
+                        <div id="userInitialsBadge" class="w-6 h-6 rounded-lg accent-bg text-white font-bold text-[11px] flex items-center justify-center">
+                            <i class="fa-regular fa-user text-[10px]"></i>
+                        </div>
+                        <div class="text-left leading-tight hidden sm:block">
+                            <p id="userNameDisplay" class="text-xs font-bold text-slate-800 dark:text-slate-100">Iniciar sesión</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- =================================================================== -->
+    <!-- PANEL DESLIZABLE DE TEMA Y ESTILO ORIGINAL (PALETA DE COLORES)      -->
+    <!-- =================================================================== -->
+    <div id="themeDrawer" class="fixed inset-y-0 right-0 z-50 w-80 bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 transform translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-palette accent-text"></i>
+                <h3 class="font-bold text-base">Diseño y Tema</h3>
+            </div>
+            <button onclick="toggleThemeDrawer()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="p-5 space-y-6 overflow-y-auto flex-1">
+            <!-- Colores de Acento -->
+            <div class="space-y-3">
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Color de Acento</label>
+                <div class="grid grid-cols-3 gap-2.5">
+                    <button onclick="setAccentTheme('#6366f1', '#4f46e5', '#eef2ff')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2 hover:border-indigo-500 text-xs font-semibold">
+                        <span class="w-4 h-4 rounded-full bg-indigo-500"></span> Índigo
+                    </button>
+                    <button onclick="setAccentTheme('#8b5cf6', '#7c3aed', '#f5f3ff')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2 hover:border-violet-500 text-xs font-semibold">
+                        <span class="w-4 h-4 rounded-full bg-violet-500"></span> Violeta
+                    </button>
+                    <button onclick="setAccentTheme('#10b981', '#059669', '#ecfdf5')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2 hover:border-emerald-500 text-xs font-semibold">
+                        <span class="w-4 h-4 rounded-full bg-emerald-500"></span> Esmeralda
+                    </button>
+                    <button onclick="setAccentTheme('#f43f5e', '#e11d48', '#fff1f2')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2 hover:border-rose-500 text-xs font-semibold">
+                        <span class="w-4 h-4 rounded-full bg-rose-500"></span> Rosa
+                    </button>
+                    <button onclick="setAccentTheme('#f59e0b', '#d97706', '#fffbeb')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2 hover:border-amber-500 text-xs font-semibold">
+                        <span class="w-4 h-4 rounded-full bg-amber-500"></span> Ámbar
+                    </button>
+                    <button onclick="setAccentTheme('#0ea5e9', '#0284c7', '#f0f9ff')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2 hover:border-sky-500 text-xs font-semibold">
+                        <span class="w-4 h-4 rounded-full bg-sky-500"></span> Cielo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tipografía -->
+            <div class="space-y-3">
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Estilo de Fuente</label>
+                <div class="space-y-2">
+                    <button onclick="setFontStyle('font-jakarta')" class="w-full text-left px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 text-xs font-bold">
+                        Plus Jakarta Sans (Moderno)
+                    </button>
+                    <button onclick="setFontStyle('font-sans')" class="w-full text-left px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 text-xs font-sans">
+                        Inter (Estándar Limpio)
+                    </button>
+                    <button onclick="setFontStyle('font-serif')" class="w-full text-left px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 text-xs font-serif">
+                        Merriweather (Editorial Formal)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- MODAL FLOTANTE DE LOGIN AL COSTADO (NO BLOQUEA LA WEB)              -->
+    <!-- =================================================================== -->
+    <div id="loginModal" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-xs flex items-start justify-end p-4 sm:p-6">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-5 mt-12 animate-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Cuenta de Usuario</h3>
+                    <p class="text-xs text-slate-500">Tu sesión identifica quién crea formularios y envía respuestas</p>
+                </div>
+                <button onclick="toggleLoginModal()" class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Estado cuando ya inició sesión -->
+            <div id="loggedUserCard" class="hidden p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl accent-bg text-white font-bold flex items-center justify-center">
+                        <span id="modalUserInitials">JS</span>
+                    </div>
+                    <div class="truncate">
+                        <p id="modalUserName" class="text-xs font-bold text-slate-900 dark:text-white truncate">Josué Nathanael Santos Ruíz</p>
+                        <p id="modalUserEmail" class="text-[11px] text-slate-500 truncate">josue.santos@utp.edu.pe</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario rápido para iniciar sesión -->
+            <div id="loginFormBox" class="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
+                <b>Sin sesión.</b> Abre esta página con tu cuenta de Claude para guardar formularios y respuestas en la base de datos.
+            </div>
+
+            <div id="loginLogBox" class="hidden space-y-2">
+                <p id="loginLogTitle" class="text-[11px] font-bold text-slate-600 dark:text-slate-300">Ingresos registrados</p>
+                <div id="loginLogList" class="max-h-56 overflow-y-auto space-y-1.5"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- CONTENEDOR PRINCIPAL DE VISTAS                                      -->
+    <!-- =================================================================== -->
+    <div id='shareModal' class='fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4'>
+        <div class='bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4 max-h-[90vh] overflow-y-auto'>
+            <div class='flex items-center justify-between'>
+                <div><h3 class='text-base font-extrabold'>¿Quién puede ver este formulario?</h3>
+                <p id='shareFormName' class='text-xs text-slate-500 truncate'></p></div>
+                <button onclick='closeShareModal()' class='p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400'><i class='fa-solid fa-xmark'></i></button>
+            </div>
+            <div id='shareBody' class='space-y-2'></div>
+            <p class='text-[11px] text-slate-500 leading-relaxed'>Las personas aparecen aquí cuando tienen acceso a la página. Para sumar gente nueva, compártela desde el menú Compartir de Claude como Colaborador.</p>
+            <button onclick='saveShare()' class='w-full py-2.5 rounded-xl accent-bg accent-bg-hover text-white font-bold text-xs shadow-sm transition'>Guardar</button>
+        </div>
+    </div>
+
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8">
+
+        <!-- =============================================================== -->
+        <!-- VISTA 0: APARTADO PRINCIPAL DE PROYECTOS Y FORMULARIOS          -->
+        <!-- =============================================================== -->
+        <section id="view-dashboard" class="space-y-8 animate-card">
+            <!-- Sección Superior: Crear nuevo formulario -->
+            <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-5">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                            Crear un nuevo formulario
+                        </h1>
+                        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                            Inicia una encuesta en blanco o selecciona un proyecto existente abajo.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- En blanco -->
+                    <button onclick="createNewBlankForm()" class="group text-left p-4 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 bg-slate-50/50 dark:bg-slate-800/40 transition-all flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl accent-light-bg accent-text flex items-center justify-center text-xl group-hover:scale-110 transition-transform shrink-0">
+                            <i class="fa-solid fa-plus"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white">Formulario en blanco</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Diseñar desde cero</p>
+                        </div>
+                    </button>
+
+                    <!-- Plantilla rápida -->
+                    <button onclick="createFormFromTemplate('course')" class="group text-left p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-indigo-400 bg-white dark:bg-slate-900 transition-all flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform shrink-0">
+                            <i class="fa-solid fa-clipboard-question"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white">Plantilla de Satisfacción</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Formato preconfigurado</p>
+                        </div>
+                    </button>
+
+                    <!-- Acceso directo a las respuestas -->
+                    <button onclick="openFormById('form_autocad_utp', 'responses')" class="group text-left p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800/70 hover:border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 transition-all flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl group-hover:scale-110 transition-transform shrink-0">
+                            <i class="fa-solid fa-file-excel"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white">Resultados AutoCAD</h3>
+                            <p class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Ver Respuesta 1 a 197 y Excel</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sección Inferior: Mis Proyectos y Formularios Creados -->
+            <div class="space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <h2 class="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
+                            Mis Proyectos y Formularios
+                        </h2>
+                        <span id="statTotalForms" class="px-2.5 py-0.5 rounded-full text-xs font-bold accent-light-bg accent-text">1</span>
+                    </div>
+                    <span class="text-xs text-slate-500">Selecciona un formulario para editarlo o ver sus respuestas</span>
+                </div>
+
+                <!-- Grid de Formularios Creados -->
+                <div id="formsGridContainer" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+            </div>
+        </section>
+
+
+        <!-- =============================================================== -->
+        <!-- VISTA 1: CONSTRUCTOR DE PREGUNTAS (EDITOR ESTILO GOOGLE FORMS)  -->
+        <!-- =============================================================== -->
+        <section id="view-builder" class="hidden space-y-6 animate-card">
+            <!-- Barra de herramientas del constructor -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-3.5 shadow-sm flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="openDashboardHome()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white dark:bg-white dark:text-slate-900 flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrow-left"></i> Mis Formularios
+                    </button>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">Añadir pregunta:</span>
+                    <button onclick="addQuestion('multiple')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-circle-dot accent-text"></i> Opción Múltiple
+                    </button>
+                    <button onclick="addQuestion('short')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-hashtag accent-text"></i> Numérica / Corta
+                    </button>
+                    <button onclick="addQuestion('scale')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-square-check accent-text"></i> Escala 1-10
+                    </button>
+                    <button onclick="addQuestion('section')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-heading accent-text"></i> Bloque Divisor
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="switchTab('responses')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                        Ver las <span id="builderRespCountBtn">197</span> respuestas →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cabecera del Formulario -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/90 dark:border-slate-800 overflow-hidden">
+                <div class="h-3 accent-bg w-full"></div>
+                <div class="p-6 sm:p-8 space-y-4">
+                    <input 
+                        type="text" 
+                        id="formTitleInput"
+                        oninput="updateFormMeta('title', this.value)"
+                        placeholder="Título del formulario"
+                        class="w-full text-xl sm:text-2xl font-extrabold bg-transparent border-b border-slate-200 dark:border-slate-700 pb-2 focus:outline-none focus:border-rose-600 text-slate-900 dark:text-white"
+                    >
+                    <textarea 
+                        id="formDescInput"
+                        rows="3"
+                        oninput="updateFormMeta('description', this.value)"
+                        placeholder="Descripción del formulario..."
+                        class="w-full text-xs sm:text-sm text-slate-600 dark:text-slate-300 bg-transparent border-b border-slate-200 dark:border-slate-700 pb-2 focus:outline-none focus:border-rose-600 resize-none leading-relaxed"
+                    ></textarea>
+                </div>
+            </div>
+
+            <!-- Contenedor de las 11 preguntas y secciones -->
+            <div id="questionsContainer" class="space-y-4"></div>
+        </section>
+
+
+        <!-- =============================================================== -->
+        <!-- VISTA 2: RESPONDER ENCUESTA (VISTA PREVIA FIEL AL WORD UTP)     -->
+        <!-- =============================================================== -->
+        <section id="view-preview" class="hidden space-y-6 animate-card">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                <div class="flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center">
+                        <i class="fa-solid fa-file-signature"></i>
+                    </span>
+                    <div>
+                        <p class="text-xs sm:text-sm font-bold">Formulario Oficial para Encuestados</p>
+                        <p class="text-[11px] text-slate-500">Cualquier respuesta nueva que envíes aquí se sumará a la base de datos y al Excel.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openDashboardHome()" class="text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100">
+                        <i class="fa-solid fa-house mr-1"></i> Inicio
+                    </button>
+                    <button onclick="switchTab('responses')" class="text-xs font-bold px-3.5 py-1.5 rounded-xl accent-bg text-white">
+                        Ir a Resultados (<span id="previewRespCountBtn">197</span>)
+                    </button>
+                </div>
+            </div>
+
+            <div id="previewFormWrapper" class="space-y-5">
+                <!-- Cabecera Institucional de la Encuesta -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/90 dark:border-slate-800 overflow-hidden">
+                    <div class="h-3.5 accent-bg w-full"></div>
+                    <div class="p-6 sm:p-8 space-y-3">
+                        <div class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider accent-text">
+                            <i class="fa-solid fa-graduation-cap"></i> Universidad Tecnológica del Perú · Facultad de Ingeniería
+                        </div>
+                        <h1 id="previewFormTitle" class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white"></h1>
+                        <p id="previewFormDesc" class="text-slate-600 dark:text-slate-300 text-xs sm:text-sm whitespace-pre-line leading-relaxed"></p>
+                    </div>
+                </div>
+
+                <!-- Formulario interactivo -->
+                <form id="liveSurveyForm" onsubmit="submitSurveyResponse(event)" novalidate class="space-y-4">
+                    <div id="previewQuestionsList" class="space-y-4"></div>
+
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500">¡Gracias por tu participación!</span>
+                        <div class="flex items-center gap-3">
+                            <button type="button" onclick="clearPreviewForm()" class="text-xs font-semibold text-slate-500 hover:text-rose-600 px-3 py-2">
+                                Limpiar selección
+                            </button>
+                            <button type="submit" class="accent-bg accent-bg-hover text-white font-bold text-xs sm:text-sm px-7 py-3 rounded-xl shadow-md transition flex items-center gap-2">
+                                <span>Enviar respuesta</span>
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Confirmación de Envío -->
+            <div id="previewSuccessState" class="hidden bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-10 text-center space-y-5">
+                <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center text-3xl">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold">¡Tu respuesta ha sido registrada!</h2>
+                <p class="text-sm text-slate-500 max-w-md mx-auto">Se ha guardado automáticamente como una nueva respuesta numerada en la base de datos de la encuesta.</p>
+                <div class="flex justify-center gap-3 pt-2">
+                    <button onclick="resetPreviewAfterSubmit()" class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold">
+                        Enviar otra respuesta
+                    </button>
+                    <button onclick="switchTab('responses')" class="accent-bg text-white px-5 py-2.5 rounded-xl text-xs font-bold">
+                        Ver todas las respuestas
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- =============================================================== -->
+        <!-- VISTA 3: CENTRO DE RESPUESTAS (RESPUESTA 1..197 + EXCEL)        -->
+        <!-- =============================================================== -->
+        <section id="view-responses" class="hidden space-y-6 animate-card">
+            <!-- Panel de Control Superior -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/90 dark:border-slate-800 p-6 space-y-5">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+                                <span id="totalResponsesCount">197</span> Respuestas Registradas
+                            </h2>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-database"></i> Base de Datos UTP Completa
+                            </span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                            Haz clic en cualquier registro (<b>Respuesta 1, Respuesta 2...</b>) para abrir su hoja de respuestas y ver exactamente qué opciones marcó y escribió.
+                        </p>
+                    </div>
+
+                    <!-- Botones de Exportación a Excel y CSV -->
+                    <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+                        <button onclick="exportToExcelWorkbook()" class="px-5 py-3 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 transition flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-file-excel text-base"></i>
+                            <span>Descargar Excel (.xlsx)</span>
+                        </button>
+                        <button onclick="exportResponsesToCSV()" class="px-3.5 py-3 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-csv text-emerald-600"></i> CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Selector de las 3 Vistas de Resultados -->
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex flex-wrap items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl">
+                        <button onclick="switchResponseSubTab('individual')" id="subtab-individual" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white dark:bg-slate-900 shadow-sm accent-text transition flex items-center gap-2">
+                            <i class="fa-solid fa-list-ol"></i>
+                            <span>Por Persona (Respuesta 1 a 197)</span>
+                        </button>
+                        <button onclick="switchResponseSubTab('summary')" id="subtab-summary" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 transition flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column"></i>
+                            <span>Gráficos y Tablas de Frecuencia</span>
+                        </button>
+                        <button onclick="switchResponseSubTab('table')" id="subtab-table" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 transition flex items-center gap-2">
+                            <i class="fa-solid fa-table"></i>
+                            <span>Hoja de Datos Excel (197 filas)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================== -->
+            <!-- SUB-VISTA 1: RESPUESTA 1, RESPUESTA 2... CON HOJA MARCADA    -->
+            <!-- =========================================================== -->
+            <div id="responsesIndividualContainer" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <!-- Columna Izquierda (4 cols): Lista "Respuesta 1", "Respuesta 2"... -->
+                <div class="lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden lg:sticky lg:top-20">
+                    <div class="p-4 border-b border-slate-100 dark:border-slate-800 space-y-3 bg-slate-50/60 dark:bg-slate-800/40">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-extrabold text-sm text-slate-800 dark:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-users-viewfinder accent-text"></i> Listado de Encuestados
+                            </h3>
+                            <span id="filteredRespCountLabel" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">197</span>
+                        </div>
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                            <input 
+                                type="text" 
+                                id="responseSearchInput" 
+                                oninput="filterIndividualResponseList(this.value)" 
+                                placeholder="Buscar ej: Respuesta 15, Civil, 23..." 
+                                class="w-full pl-8 pr-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:border-rose-500"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Lista desplazable de botones Respuesta 1 ... Respuesta 197 -->
+                    <div id="responseSidebarList" class="max-h-[560px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/70 p-2 space-y-1"></div>
+                </div>
+
+                <!-- Columna Derecha (8 cols): Hoja de Respuesta Abierta con lo que dijo y marcó -->
+                <div class="lg:col-span-8 space-y-4">
+                    <!-- Barra de navegación rápida entre Respuesta Anterior / Siguiente -->
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                        <div class="flex items-center gap-2">
+                            <button onclick="navigateIndividual(-1)" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-chevron-left"></i> Anterior
+                            </button>
+                            <div class="px-3 py-1.5 rounded-xl accent-light-bg accent-text font-extrabold text-sm">
+                                Viendo: <span id="currentIndividualTitleBadge">Respuesta 1</span> de <span id="totalIndividualCount">197</span>
+                            </div>
+                            <button onclick="navigateIndividual(1)" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition flex items-center gap-1.5">
+                                Siguiente <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="text-slate-400">Ir a N°:</span>
+                            <input type="number" id="jumpToRespInput" min="1" max="197" value="1" onchange="jumpToResponseNumber(this.value)" class="w-16 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-center">
+                        </div>
+                    </div>
+
+                    <!-- Contenedor donde se dibuja el examen/encuesta completo con las opciones marcadas -->
+                    <div id="individualResponseContent" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <!-- =========================================================== -->
+            <!-- SUB-VISTA 2: RESUMEN Y TABLAS DE FRECUENCIA                 -->
+            <!-- =========================================================== -->
+            <div id="responsesSummaryContainer" class="hidden space-y-6"></div>
+
+            <!-- =========================================================== -->
+            <!-- SUB-VISTA 3: VISTA HOJA DE EXCEL (197 FILAS COMPLETAS)      -->
+            <!-- =========================================================== -->
+            <div id="responsesTableContainer" class="hidden bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/40">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-table text-emerald-600"></i>
+                        <span class="text-xs sm:text-sm font-bold">Base de Datos Completa · Vista Hoja de Cálculo (197 registros)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="excelTableSearch" oninput="renderSpreadsheetTable(this.value)" placeholder="Filtrar en la tabla..." class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs">
+                        <button onclick="exportToExcelWorkbook()" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5">
+                            <i class="fa-solid fa-download"></i> Bajar .xlsx
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto max-h-[620px]">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead id="spreadsheetTableHead" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 sticky top-0 z-10 font-bold uppercase tracking-wider"></thead>
+                        <tbody id="spreadsheetTableBody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- CONTENEDOR DE NOTIFICACIONES TOAST -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- =================================================================== -->
+    <!-- LÓGICA JAVASCRIPT Y BASE DE DATOS DE 197 RESPUESTAS UTP             -->
+    <!-- =================================================================== -->
+    <script>
+        // =========================================================================
+        // ESTADO GLOBAL DE LA APLICACIÓN (PROYECTOS + LOGIN OPCIONAL AL COSTADO)
+        // =========================================================================
+        let currentUser = { name: "Iniciar sesión", email: "", loggedIn: false, id: null, role: "" };
+        let allForms = [];
+        let surveyState = null; // Apunta al formulario activo
+        let currentIndividualIdx = 0;
+        let filteredIndividualIndices = [];
+
+        // --- Base de datos (colecciones: forms, responses, logins) ---
+        let db = null, userApi = null, canAdmin = false;
+        let formsCache = {}, respCache = [], lastSaved = {}, saveTimer = null, seeded = false;
+
+        function calcularRangoEdad(v) {
+            const n = Number(v);
+            if (!n) return '—';
+            if (n <= 20) return '17-20';
+            if (n <= 24) return '21-24';
+            if (n <= 30) return '24-30';
+            return '30-33';
+        }
+
+        // --- 197 respuestas importadas de la hoja "Base de Datos" del Excel ---
+        const IMPORTED_AUTOCAD_ROWS = [
+            ["Ing. Civil", "21-24", 23, "Tercer", "Muy mala", "Sí", 6, "Sexto", "Nunca", 2, "Gama alta", "Trabajo"],
+            ["Arquitectura", "24-30", 29, "Tercer", "Muy mala", "Sí", 10, "Tercer", "Nunca", 10, "Gama alta", "Estudio"],
+            ["Arquitectura", "17-20", 19, "Quinto", "Mala", "No", 7, "Tercer", "A veces", 1, "Gama alta", "Trabajo"],
+            ["Ing. Electromecánica", "21-24", 23, "Sexto", "Mala", "Sí", 5, "Quinto", "Nunca", 8, "Gama alta", "Otras actividades"],
+            ["Ing. Civil", "17-20", 20, "Quinto", "Regular", "Sí", 4, "Octavo", "Nunca", 8, "Gama alta", "Estudio"],
+            ["Arquitectura", "17-20", 17, "Cuarto", "Muy buena", "No", 3, "Segundo", "Casi siempre", 3, "Gama baja", "Ambos"],
+            ["Ing. Eléctrica", "21-24", 21, "Quinto", "Buena", "No", 10, "Segundo", "Siempre", 9, "Gama alta", "Ambos"],
+            ["Arquitectura", "24-30", 26, "Séptimo", "Regular", "No", 2, "Tercer", "Nunca", 10, "Gama alta", "Otras actividades"],
+            ["Ing. Mecánica", "21-24", 23, "Sexto", "Buena", "Sí", 9, "Sexto", "Casi nunca", 8, "Gama alta", "Trabajo"],
+            ["Ing. Eléctrica", "24-30", 25, "Noveno", "Buena", "No", 7, "Quinto", "A veces", 5, "Gama alta", "Estudio"],
+            ["Arquitectura", "24-30", 28, "Noveno", "Regular", "No", 10, "Segundo", "Casi nunca", 5, "Gama media", "Estudio"],
+            ["Ing. Electrónica", "21-24", 21, "Sexto", "Muy mala", "Sí", 7, "Segundo", "A veces", 8, "Gama baja", "Otras actividades"],
+            ["Arquitectura", "21-24", 24, "Quinto", "Mala", "Sí", 4, "Segundo", "Siempre", 8, "Gama alta", "Trabajo"],
+            ["Ing. Software", "21-24", 24, "Quinto", "Regular", "Sí", 7, "Segundo", "Siempre", 10, "Gama alta", "Trabajo"],
+            ["Ing. Software", "21-24", 24, "Noveno", "Muy mala", "Sí", 5, "Segundo", "Nunca", 3, "Gama alta", "Ambos"],
+            ["Arquitectura", "21-24", 23, "Octavo", "Mala", "No", 9, "Segundo", "Casi nunca", 9, "Gama alta", "Ambos"],
+            ["Ing. Electromecánica", "24-30", 24, "Sexto", "Buena", "Sí", 10, "Octavo", "Casi nunca", 9, "Gama alta", "Estudio"],
+            ["Arquitectura", "30-33", 31, "Cuarto", "Regular", "Sí", 1, "Segundo", "A veces", 2, "Gama alta", "Estudio"],
+            ["Ing. Civil", "17-20", 20, "Quinto", "Muy mala", "No", 5, "Primer", "Casi siempre", 9, "Gama media", "Ambos"],
+            ["Arquitectura", "24-30", 30, "Sexto", "Mala", "No", 7, "Tercer", "A veces", 10, "Gama media", "Estudio"],
+            ["Arquitectura", "24-30", 26, "Primer", "Muy mala", "Sí", 5, "Segundo", "A veces", 4, "Gama baja", "Trabajo"],
+            ["Arquitectura", "24-30", 26, "Cuarto", "Muy mala", "No", 3, "Tercer", "Casi nunca", 7, "Gama alta", "Trabajo"],
+            ["Ing. Mecánica", "21-24", 21, "Séptimo", "Muy mala", "Sí", 5, "Segundo", "Nunca", 4, "Gama alta", "Trabajo"],
+            ["Ing. Eléctrica", "24-30", 28, "Octavo", "Muy mala", "No", 10, "Tercer", "Casi nunca", 5, "Gama alta", "Ambos"],
+            ["Arquitectura", "24-30", 28, "Noveno", "Buena", "Sí", 8, "Sexto", "Casi nunca", 9, "Gama media", "Otras actividades"],
+            ["Ing. Eléctrica", "21-24", 21, "Séptimo", "Muy buena", "No", 7, "Octavo", "A veces", 7, "Gama media", "Ambos"],
+            ["Arquitectura", "21-24", 24, "Cuarto", "Muy mala", "Sí", 9, "Tercer", "A veces", 5, "Gama alta", "Estudio"],
+            ["Ing. Civil", "21-24", 21, "Segundo", "Muy mala", "Sí", 10, "Tercer", "Nunca", 4, "Gama media", "Ambos"],
+            ["Ing. Civil", "24-30", 27, "Quinto", "Regular", "No", 9, "Segundo", "Casi siempre", 9, "Gama media", "Ambos"],
+            ["Ing. Eléctrica", "24-30", 28, "Quinto", "Buena", "Sí", 9, "Cuarto", "A veces", 9, "Gama alta", "Ambos"],
+            ["Ing. Software", "21-24", 22, "Octavo", "Muy buena", "Sí", 9, "Octavo", "Casi siempre", 7, "Gama alta", "Otras actividades"],
+            ["Ing. Eléctrica", "24-30", 24, "Tercer", "Muy mala", "No", 9, "Tercer", "A veces", 4, "Gama media", "Otras actividades"],
+            ["Ing. Civil", "21-24", 24, "Séptimo", "Muy buena", "Sí", 3, "Segundo", "Casi nunca", 5, "Gama alta", "Ambos"],
+            ["Ing. Software", "21-24", 24, "Cuarto", "Buena", "Sí", 10, "Segundo", "Nunca", 2, "Gama baja", "Ambos"],
+            ["Arquitectura", "17-20", 19, "Sexto", "Muy mala", "Sí", 1, "Segundo", "A veces", 8, "Gama alta", "Ambos"],
+            ["Arquitectura", "21-24", 22, "Décimo", "Regular", "Sí", 10, "Noveno", "Casi siempre", 9, "Gama alta", "Otras actividades"],
+            ["Ing. Industrial", "17-20", 18, "Cuarto", "Mala", "No", 8, "Cuarto", "Nunca", 4, "Gama alta", "Ambos"],
+            ["Ing. Electromecánica", "24-30", 29, "Séptimo", "Muy mala", "Sí", 3, "Cuarto", "Casi nunca", 1, "Gama baja", "Trabajo"],
+            ["Arquitectura", "21-24", 23, "Quinto", "Regular", "Sí", 6, "Tercer", "A veces", 7, "Gama alta", "Ambos"],
+            ["Arquitectura", "21-24", 24, "Sexto", "Regular", "Sí", 10, "Quinto", "Casi nunca", 7, "Gama baja", "Trabajo"],
+            ["Ing. Mecánica", "21-24", 23, "Séptimo", "Buena", "Sí", 5, "Cuarto", "Casi nunca", 10, "Gama alta", "Trabajo"],
+            ["Arquitectura", "24-30", 30, "Séptimo", "Buena", "Sí", 6, "Tercer", "A veces", 5, "Gama alta", "Trabajo"],
+            ["Ing. Civil", "21-24", 21, "Tercer", "Muy buena", "Sí", 5, "Segundo", "Nunca", 9, "Gama media", "Estudio"],
+            ["Ing. Mecánica", "21-24", 23, "Noveno", "Muy mala", "Sí", 4, "Segundo", "Casi siempre", 10, "Gama baja", "Ambos"],
+            ["Ing. Industrial", "24-30", 30, "Quinto", "Muy buena", "Sí", 10, "Segundo", "Nunca", 3, "Gama baja", "Otras actividades"],
+            ["Ing. Civil", "24-30", 29, "Séptimo", "Buena", "No", 3, "Séptimo", "Nunca", 9, "Gama alta", "Trabajo"],
+            ["Ing. Civil", "24-30", 28, "Séptimo", "Muy mala", "Sí", 7, "Cuarto", "Casi siempre", 7, "Gama alta", "Trabajo"],
+            ["Ing. Mecánica", "21-24", 22, "Sexto", "Mala", "Sí", 6, "Noveno", "Siempre", 5, "Gama media", "Ambos"],
+            ["Ing. Electromecánica", "24-30", 30, "Tercer", "Muy mala", "Sí", 8, "Sexto", "A veces", 10, "Gama baja", "Otras actividades"],
+            ["Arquitectura", "24-30", 30, "Octavo", "Muy buena", "No", 8, "Segundo", "Nunca", 10, "Gama media", "Ambos"],
+            ["Arquitectura", "30-33", 31, "Sexto", "Buena", "Sí", 9, "Cuarto", "Nunca", 4, "Gama media", "Trabajo"],
+            ["Ing. Industrial", "17-20", 18, "Séptimo", "Muy mala", "No", 10, "Segundo", "A veces", 10, "Gama alta", "Ambos"],
+            ["Arquitectura", "24-30", 27, "Octavo", "Mala", "Sí", 10, "Cuarto", "Casi nunca", 3, "Gama alta", "Ambos"],
+            ["Ing. Electromecánica", "21-24", 21, "Octavo", "Mala", "Sí", 10, "Cuarto", "A veces", 1, "Gama baja", "Ambos"],
+            ["Ing. Mecánica", "17-20", 18, "Cuarto", "Regular", "No", 7, "Segundo", "Siempre", 8, "Gama media", "Trabajo"],
+            ["Ing. Civil", "21-24", 24, "Quinto", "Buena", "Sí", 8, "Segundo", "A veces", 5, "Gama alta", "Ambos"],
+            ["Ing. Industrial", "21-24", 24, "Noveno", "Buena", "Sí", 9, "Cuarto", "Casi nunca", 4, "Gama alta", "Trabajo"],
+            ["Ing. Electromecánica", "24-30", 28, "Cuarto", "Muy mala", "Sí", 7, "Segundo", "Casi nunca", 8, "Gama alta", "Ambos"],
+            ["Ing. Civil", "21-24", 23, "Cuarto", "Muy buena", "No", 4, "Cuarto", "Nunca", 7, "Gama media", "Ambos"],
+            ["Arquitectura", "24-30", 28, "Séptimo", "Muy buena", "Sí", 5, "Tercer", "A veces", 3, "Gama media", "Estudio"],
+            ["Ing. Civil", "24-30", 30, "Séptimo", "Buena", "Sí", 8, "Octavo", "A veces", 5, "Gama baja", "Estudio"],
+            ["Arquitectura", "21-24", 23, "Sexto", "Muy buena", "Sí", 2, "Séptimo", "Nunca", 5, "Gama alta", "Otras actividades"],
+            ["Ing. Electromecánica", "24-30", 30, "Octavo", "Buena", "Sí", 5, "Décimo", "Nunca", 5, "Gama alta", "Ambos"],
+            ["Ing. Civil", "24-30", 26, "Octavo", "Muy mala", "No", 9, "Noveno", "Nunca", 2, "Gama media", "Estudio"],
+            ["Arquitectura", "24-30", 29, "Tercer", "Muy buena", "Sí", 3, "Quinto", "Casi siempre", 5, "Gama alta", "Trabajo"],
+            ["Arquitectura", "24-30", 27, "Octavo", "Buena", "Sí", 2, "Segundo", "Casi nunca", 6, "Gama media", "Ambos"],
+            ["Ing. Software", "24-30", 28, "Sexto", "Buena", "Sí", 10, "Segundo", "Nunca", 9, "Gama alta", "Ambos"],
+            ["Ing. Civil", "17-20", 18, "Séptimo", "Muy mala", "Sí", 10, "Segundo", "Casi nunca", 8, "Gama media", "Otras actividades"],
+            ["Ing. Mecánica", "21-24", 24, "Noveno", "Mala", "No", 7, "Quinto", "Nunca", 8, "Gama alta", "Ambos"],
+            ["Ing. Eléctrica", "21-24", 22, "Séptimo", "Regular", "Sí", 7, "Segundo", "Siempre", 7, "Gama media", "Estudio"],
+            ["Ing. Software", "17-20", 17, "Noveno", "Muy mala", "No", 10, "Séptimo", "Casi nunca", 3, "Gama media", "Ambos"],
+            ["Ing. Mecánica", "24-30", 30, "Octavo", "Buena", "No", 9, "Segundo", "Casi nunca", 9, "Gama media", "Ambos"],
+            ["Arquitectura", "21-24", 22, "Tercer", "Regular", "Sí", 2, "Segundo", "Nunca", 9, "Gama baja", "Otras actividades"],
+            ["Ing. Mecánica", "24-30", 28, "Sexto", "Muy mala", "Sí", 9, "Tercer", "Nunca", 5, "Gama media", "Estudio"],
+            ["Ing. Eléctrica", "24-30", 27, "Séptimo", "Muy buena", "No", 9, "Cuarto", "A veces", 9, "Gama alta", "Trabajo"],
+            ["Arquitectura", "21-24", 24, "Octavo", "Regular", "No", 10, "Noveno", "A veces", 9, "Gama alta", "Ambos"],
+            ["Ing. Civil", "21-24", 22, "Octavo", "Buena", "Sí", 9, "Segundo", "Casi siempre", 9, "Gama alta", "Ambos"],
+            ["Ing. Civil", "21-24", 23, "Cuarto", "Muy mala", "Sí", 9, "Sexto", "Casi nunca", 9, "Gama baja", "Ambos"],
+            ["Ing. Software", "24-30", 30, "Tercer", "Regular", "Sí", 8, "Segundo", "Siempre", 6, "Gama baja", "Estudio"],
+            ["Ing. Mecánica", "21-24", 24, "Noveno", "Muy mala", "Sí", 10, "Sexto", "Casi nunca", 6, "Gama alta", "Estudio"],
+            ["Ing. Civil", "24-30", 28, "Quinto", "Regular", "No", 8, "Segundo", "A veces", 2, "Gama media", "Otras actividades"],
+            ["Ing. Software", "24-30", 28, "Noveno", "Buena", "Sí", 9, "Segundo", "A veces", 9, "Gama baja", "Ambos"],
+            ["Arquitectura", "21-24", 22, "Octavo", "Muy mala", "Sí", 6, "Tercer", "Siempre", 4, "Gama alta", "Ambos"],
+            ["Arquitectura", "24-30", 27, "Segundo", "Buena", "Sí", 9, "Segundo", "Casi nunca", 4, "Gama media", "Trabajo"],
+            ["Ing. Electromecánica", "17-20", 20, "Octavo", "Regular", "No", 5, "Quinto", "Casi siempre", 9, "Gama media", "Otras actividades"],
+            ["Ing. Civil", "24-30", 29, "Sexto", "Muy mala", "Sí", 10, "Segundo", "Casi siempre", 9, "Gama media", "Estudio"],
+            ["Ing. Software", "24-30", 28, "Quinto", "Muy mala", "No", 8, "Cuarto", "Nunca", 10, "Gama alta", "Ambos"],
+            ["Arquitectura", "24-30", 28, "Cuarto", "Buena", "Sí", 9, "Octavo", "Casi nunca", 8, "Gama baja", "Estudio"],
+            ["Ing. Mecánica", "24-30", 30, "Sexto", "Regular", "Sí", 9, "Cuarto", "Nunca", 4, "Gama baja", "Ambos"],
+            ["Ing. Electrónica", "21-24", 24, "Noveno", "Regular", "No", 3, "Segundo", "Siempre", 8, "Gama baja", "Ambos"],
+            ["Ing. Electromecánica", "24-30", 28, "Quinto", "Mala", "No", 5, "Sexto", "Casi siempre", 5, "Gama alta", "Ambos"],
+            ["Ing. Eléctrica", "24-30", 26, "Noveno", "Muy mala", "Sí", 10, "Segundo", "A veces", 4, "Gama baja", "Ambos"],
+            ["Arquitectura", "24-30", 29, "Séptimo", "Muy mala", "Sí", 6, "Segundo", "Nunca", 2, "Gama media", "Estudio"],
+            ["Ing. Minas", "17-20", 17, "Sexto", "Muy mala", "Sí", 6, "Quinto", "Nunca", 5, "Gama alta", "Trabajo"],
+            ["Ing. Software", "24-30", 24, "Quinto", "Muy mala", "Sí", 5, "Primer", "Casi siempre", 10, "Gama media", "Ambos"],
+            ["Arquitectura", "24-30", 28, "Quinto", "Muy mala", "Sí", 9, "Tercer", "A veces", 4, "Gama media", "Ambos"],
+            ["Ing. Industrial", "17-20", 17, "Noveno", "Muy mala", "Sí", 4, "Segundo", "Nunca", 9, "Gama media", "Ambos"],
+            ["Arquitectura", "24-30", 26, "Segundo", "Muy mala", "No", 9, "Octavo", "A veces", 7, "Gama media", "Estudio"],
+            ["Arquitectura", "24-30", 24, "Séptimo", "Buena", "Sí", 10, "Segundo", "A veces", 9, "Gama alta", "Trabajo"],
+            ["Ing. Minas", "21-24", 23, "Quinto", "Muy mala", "Sí", 10, "Sexto", "A veces", 2, "Gama baja", "Ambos"],
+            ["Ing. Mecánica", "24-30", 26, "Tercer", "Buena", "No", 5, "Tercer", "Casi siempre", 10, "Gama baja", "Otras actividades"],
+            ["Ing. Mecánica", "21-24", 24, "Noveno", "Mala", "Sí", 10, "Tercer", "Casi nunca", 8, "Gama baja", "Ambos"],
+            ["Ing. Civil", "17-20", 19, "Tercer", "Muy mala", "No", 7, "Tercer", "A veces", 4, "Gama baja", "Estudio"],
+            ["Ing. Civil", "24-30", 29, "Séptimo", "Regular", "No", 7, "Segundo", "A veces", 9, "Gama media", "Estudio"],
+            ["Ing. Industrial", "21-24", 23, "Sexto", "Buena", "Sí", 4, "Tercer", "Casi siempre", 4, "Gama alta", "Trabajo"],
+            ["Ing. Civil", "17-20", 17, "Séptimo", "Mala", "Sí", 2, "Octavo", "Casi nunca", 9, "Gama media", "Trabajo"],
+            ["Ing. Minas", "24-30", 30, "Sexto", "Mala", "Sí", 3, "Segundo", "Casi nunca", 6, "Gama media", "Trabajo"],
+            ["Ing. Civil", "21-24", 22, "Séptimo", "Muy mala", "Sí", 7, "Noveno", "A veces", 6, "Gama alta", "Trabajo"],
+            ["Ing. Civil", "21-24", 21, "Quinto", "Buena", "Sí", 8, "Segundo", "Casi siempre", 8, "Gama baja", "Estudio"],
+            ["Arquitectura", "17-20", 20, "Sexto", "Muy mala", "No", 6, "Tercer", "A veces", 7, "Gama baja", "Otras actividades"],
+            ["Ing. Civil", "17-20", 19, "Cuarto", "Mala", "Sí", 3, "Segundo", "Nunca", 5, "Gama alta", "Estudio"],
+            ["Ing. Civil", "21-24", 21, "Sexto", "Buena", "Sí", 5, "Tercer", "A veces", 9, "Gama baja", "Ambos"],
+            ["Ing. Electromecánica", "24-30", 29, "Sexto", "Buena", "Sí", 3, "Segundo", "Casi siempre", 8, "Gama alta", "Otras actividades"],
+            ["Ing. Software", "24-30", 27, "Segundo", "Muy buena", "Sí", 6, "Tercer", "Nunca", 5, "Gama baja", "Estudio"],
+            ["Ing. Eléctrica", "24-30", 25, "Octavo", "Muy mala", "Sí", 5, "Noveno", "Siempre", 7, "Gama alta", "Ambos"],
+            ["Arquitectura", "24-30", 27, "Cuarto", "Mala", "Sí", 9, "Tercer", "Casi nunca", 5, "Gama baja", "Ambos"],
+            ["Ing. Eléctrica", "17-20", 20, "Cuarto", "Muy mala", "No", 5, "Segundo", "Nunca", 5, "Gama baja", "Trabajo"],
+            ["Ing. Eléctrica", "24-30", 29, "Noveno", "Regular", "Sí", 9, "Segundo", "Nunca", 9, "Gama alta", "Otras actividades"],
+            ["Arquitectura", "21-24", 24, "Tercer", "Mala", "Sí", 8, "Cuarto", "A veces", 7, "Gama media", "Trabajo"],
+            ["Ing. Eléctrica", "21-24", 24, "Sexto", "Buena", "Sí", 5, "Segundo", "Casi nunca", 8, "Gama baja", "Ambos"],
+            ["Ing. Software", "21-24", 22, "Segundo", "Muy mala", "Sí", 4, "Séptimo", "Casi siempre", 2, "Gama media", "Otras actividades"],
+            ["Ing. Civil", "17-20", 19, "Octavo", "Muy mala", "Sí", 7, "Cuarto", "Casi nunca", 9, "Gama baja", "Otras actividades"],
+            ["Ing. Mecánica", "24-30", 28, "Cuarto", "Muy mala", "No", 5, "Segundo", "Nunca", 8, "Gama alta", "Ambos"],
+            ["Arquitectura", "24-30", 27, "Sexto", "Muy mala", "Sí", 5, "Segundo", "Nunca", 10, "Gama baja", "Trabajo"],
+            ["Ing. Mecánica", "24-30", 30, "Sexto", "Muy mala", "Sí", 7, "Cuarto", "Casi nunca", 9, "Gama alta", "Ambos"],
+            ["Ing. Electromecánica", "21-24", 23, "Séptimo", "Muy buena", "Sí", 8, "Segundo", "Nunca", 6, "Gama alta", "Otras actividades"],
+            ["Arquitectura", "30-33", 30, "Séptimo", "Muy mala", "No", 5, "Tercer", "Nunca", 9, "Gama media", "Otras actividades"],
+            ["Ing. Mecánica", "21-24", 21, "Sexto", "Buena", "Sí", 5, "Cuarto", "Siempre", 5, "Gama media", "Ambos"],
+            ["Arquitectura", "24-30", 28, "Sexto", "Muy mala", "No", 4, "Segundo", "Casi nunca", 10, "Gama baja", "Estudio"],
+            ["Ing. Mecánica", "17-20", 19, "Cuarto", "Muy buena", "No", 9, "Segundo", "A veces", 9, "Gama alta", "Ambos"],
+            ["Ing. Civil", "24-30", 26, "Quinto", "Buena", "Sí", 10, "Tercer", "Casi nunca", 4, "Gama baja", "Otras actividades"],
+            ["Ing. Software", "24-30", 24, "Séptimo", "Mala", "Sí", 5, "Segundo", "Casi siempre", 5, "Gama alta", "Ambos"],
+            ["Ing. Software", "24-30", 29, "Octavo", "Mala", "No", 10, "Quinto", "A veces", 4, "Gama media", "Ambos"],
+            ["Arquitectura", "17-20", 18, "Sexto", "Muy mala", "Sí", 10, "Segundo", "Casi nunca", 9, "Gama alta", "Trabajo"],
+            ["Ing. Software", "17-20", 18, "Tercer", "Regular", "Sí", 1, "Segundo", "Casi siempre", 7, "Gama baja", "Estudio"],
+            ["Ing. Electromecánica", "24-30", 28, "Cuarto", "Regular", "No", 6, "Tercer", "Nunca", 5, "Gama alta", "Estudio"],
+            ["Ing. Eléctrica", "24-30", 26, "Quinto", "Muy mala", "Sí", 5, "Segundo", "A veces", 9, "Gama baja", "Estudio"],
+            ["Arquitectura", "24-30", 30, "Octavo", "Regular", "No", 5, "Tercer", "A veces", 9, "Gama alta", "Otras actividades"],
+            ["Ing. Electromecánica", "21-24", 21, "Séptimo", "Regular", "No", 2, "Segundo", "A veces", 9, "Gama baja", "Estudio"],
+            ["Arquitectura", "24-30", 27, "Noveno", "Muy mala", "Sí", 4, "Segundo", "Casi nunca", 8, "Gama media", "Estudio"],
+            ["Arquitectura", "24-30", 28, "Séptimo", "Muy mala", "Sí", 8, "Segundo", "A veces", 9, "Gama alta", "Trabajo"],
+            ["Ing. Mecánica", "17-20", 18, "Segundo", "Buena", "Sí", 8, "Segundo", "Casi nunca", 9, "Gama baja", "Ambos"],
+            ["Ing. Eléctrica", "21-24", 21, "Sexto", "Regular", "Sí", 10, "Séptimo", "Casi nunca", 7, "Gama media", "Ambos"],
+            ["Ing. Civil", "24-30", 26, "Cuarto", "Buena", "Sí", 4, "Segundo", "A veces", 5, "Gama alta", "Ambos"],
+            ["Arquitectura", "24-30", 27, "Octavo", "Mala", "No", 10, "Segundo", "Siempre", 7, "Gama media", "Estudio"],
+            ["Ing. Mecánica", "21-24", 23, "Quinto", "Regular", "Sí", 6, "Tercer", "Casi siempre", 6, "Gama alta", "Estudio"],
+            ["Arquitectura", "30-33", 30, "Cuarto", "Regular", "Sí", 5, "Segundo", "Casi siempre", 9, "Gama alta", "Trabajo"],
+            ["Ing. Civil", "24-30", 26, "Sexto", "Muy mala", "No", 9, "Octavo", "Siempre", 3, "Gama alta", "Otras actividades"],
+            ["Ing. Civil", "21-24", 24, "Octavo", "Muy mala", "Sí", 10, "Noveno", "Siempre", 9, "Gama alta", "Ambos"],
+            ["Arquitectura", "24-30", 28, "Sexto", "Muy mala", "No", 8, "Segundo", "Nunca", 7, "Gama media", "Estudio"],
+            ["Ing. Eléctrica", "24-30", 29, "Tercer", "Regular", "Sí", 7, "Quinto", "Nunca", 9, "Gama alta", "Ambos"],
+            ["Ing. Mecánica", "24-30", 30, "Quinto", "Muy mala", "Sí", 10, "Octavo", "A veces", 9, "Gama alta", "Ambos"],
+            ["Ing. Mecánica", "21-24", 22, "Décimo", "Muy mala", "No", 5, "Segundo", "A veces", 5, "Gama alta", "Ambos"],
+            ["Arquitectura", "21-24", 21, "Sexto", "Muy mala", "No", 3, "Tercer", "Casi siempre", 4, "Gama alta", "Trabajo"],
+            ["Ing. Mecánica", "24-30", 27, "Octavo", "Muy mala", "No", 10, "Segundo", "A veces", 9, "Gama media", "Ambos"],
+            ["Ing. Minas", "24-30", 25, "Sexto", "Buena", "Sí", 8, "Décimo", "A veces", 3, "Gama alta", "Otras actividades"],
+            ["Ing. Industrial", "21-24", 24, "Quinto", "Muy buena", "No", 9, "Segundo", "A veces", 7, "Gama alta", "Ambos"],
+            ["Ing. Mecánica", "17-20", 20, "Tercer", "Mala", "Sí", 1, "Quinto", "Nunca", 9, "Gama alta", "Trabajo"],
+            ["Ing. Software", "17-20", 20, "Cuarto", "Muy mala", "Sí", 9, "Tercer", "Nunca", 4, "Gama media", "Otras actividades"],
+            ["Arquitectura", "24-30", 26, "Sexto", "Muy mala", "Sí", 7, "Quinto", "A veces", 10, "Gama alta", "Ambos"],
+            ["Ing. Software", "17-20", 18, "Cuarto", "Mala", "Sí", 4, "Décimo", "Casi nunca", 2, "Gama media", "Otras actividades"],
+            ["Ing. Mecánica", "24-30", 30, "Octavo", "Muy mala", "Sí", 10, "Segundo", "A veces", 9, "Gama alta", "Estudio"],
+            ["Ing. Minas", "17-20", 20, "Octavo", "Regular", "Sí", 5, "Segundo", "Nunca", 4, "Gama media", "Ambos"],
+            ["Arquitectura", "17-20", 18, "Sexto", "Buena", "Sí", 7, "Tercer", "Casi siempre", 10, "Gama alta", "Trabajo"],
+            ["Arquitectura", "21-24", 23, "Tercer", "Muy mala", "Sí", 3, "Tercer", "Casi nunca", 8, "Gama alta", "Otras actividades"],
+            ["Ing. Eléctrica", "30-33", 33, "Séptimo", "Buena", "No", 8, "Segundo", "A veces", 9, "Gama media", "Trabajo"],
+            ["Ing. Electromecánica", "21-24", 21, "Cuarto", "Regular", "No", 2, "Segundo", "A veces", 7, "Gama media", "Ambos"],
+            ["Ing. Civil", "24-30", 27, "Tercer", "Buena", "Sí", 9, "Tercer", "Nunca", 9, "Gama media", "Ambos"],
+            ["Arquitectura", "24-30", 25, "Tercer", "Muy mala", "No", 7, "Segundo", "A veces", 8, "Gama baja", "Estudio"],
+            ["Ing. Mecánica", "17-20", 17, "Segundo", "Buena", "No", 10, "Tercer", "A veces", 9, "Gama alta", "Ambos"],
+            ["Ing. Electrónica", "21-24", 23, "Séptimo", "Muy buena", "Sí", 6, "Noveno", "Casi nunca", 6, "Gama baja", "Estudio"],
+            ["Ing. Software", "17-20", 18, "Sexto", "Muy mala", "Sí", 8, "Segundo", "A veces", 3, "Gama alta", "Trabajo"],
+            ["Arquitectura", "21-24", 21, "Séptimo", "Regular", "Sí", 8, "Quinto", "A veces", 8, "Gama alta", "Ambos"],
+            ["Ing. Electromecánica", "21-24", 24, "Sexto", "Regular", "Sí", 7, "Tercer", "Nunca", 2, "Gama baja", "Otras actividades"],
+            ["Ing. Industrial", "17-20", 17, "Cuarto", "Muy mala", "Sí", 5, "Tercer", "Nunca", 8, "Gama alta", "Otras actividades"],
+            ["Ing. Electromecánica", "24-30", 30, "Noveno", "Regular", "Sí", 4, "Segundo", "A veces", 2, "Gama media", "Ambos"],
+            ["Ing. Civil", "24-30", 24, "Octavo", "Buena", "Sí", 10, "Segundo", "A veces", 7, "Gama alta", "Trabajo"],
+            ["Arquitectura", "24-30", 28, "Cuarto", "Regular", "No", 7, "Cuarto", "Nunca", 3, "Gama baja", "Ambos"],
+            ["Arquitectura", "21-24", 21, "Sexto", "Regular", "Sí", 7, "Séptimo", "Nunca", 7, "Gama alta", "Ambos"],
+            ["Arquitectura", "24-30", 28, "Primer", "Buena", "No", 8, "Segundo", "Casi nunca", 9, "Gama media", "Ambos"],
+            ["Arquitectura", "24-30", 29, "Tercer", "Regular", "Sí", 7, "Tercer", "Siempre", 9, "Gama alta", "Ambos"],
+            ["Arquitectura", "24-30", 27, "Quinto", "Mala", "Sí", 10, "Primer", "Nunca", 8, "Gama baja", "Ambos"],
+            ["Ing. Mecánica", "21-24", 24, "Sexto", "Buena", "Sí", 3, "Séptimo", "Casi nunca", 5, "Gama alta", "Ambos"],
+            ["Ing. Electromecánica", "24-30", 30, "Noveno", "Buena", "Sí", 8, "Octavo", "A veces", 10, "Gama alta", "Estudio"],
+            ["Arquitectura", "21-24", 22, "Tercer", "Buena", "Sí", 10, "Tercer", "Casi nunca", 9, "Gama alta", "Trabajo"],
+            ["Ing. Civil", "24-30", 26, "Tercer", "Buena", "Sí", 8, "Segundo", "Casi nunca", 7, "Gama baja", "Ambos"],
+            ["Ing. Software", "24-30", 28, "Quinto", "Muy buena", "Sí", 9, "Sexto", "Nunca", 4, "Gama media", "Otras actividades"],
+            ["Arquitectura", "21-24", 24, "Séptimo", "Muy mala", "Sí", 5, "Tercer", "Siempre", 4, "Gama baja", "Estudio"],
+            ["Ing. Industrial", "24-30", 27, "Séptimo", "Regular", "Sí", 6, "Segundo", "Nunca", 8, "Gama baja", "Ambos"],
+            ["Arquitectura", "24-30", 30, "Quinto", "Muy mala", "Sí", 8, "Segundo", "Casi siempre", 8, "Gama baja", "Trabajo"],
+            ["Arquitectura", "24-30", 30, "Octavo", "Muy mala", "Sí", 10, "Quinto", "Nunca", 1, "Gama media", "Trabajo"],
+            ["Arquitectura", "21-24", 22, "Noveno", "Buena", "Sí", 9, "Cuarto", "Nunca", 4, "Gama media", "Otras actividades"],
+            ["Ing. Eléctrica", "21-24", 23, "Cuarto", "Muy mala", "No", 8, "Segundo", "Casi nunca", 6, "Gama alta", "Otras actividades"],
+            ["Ing. Industrial", "24-30", 28, "Sexto", "Regular", "No", 5, "Octavo", "A veces", 5, "Gama media", "Estudio"],
+            ["Arquitectura", "24-30", 27, "Noveno", "Regular", "No", 10, "Sexto", "Nunca", 5, "Gama media", "Trabajo"],
+            ["Arquitectura", "24-30", 27, "Cuarto", "Buena", "Sí", 2, "Tercer", "Nunca", 4, "Gama baja", "Ambos"],
+            ["Ing. Software", "21-24", 21, "Octavo", "Muy mala", "No", 9, "Sexto", "Casi nunca", 5, "Gama media", "Ambos"]
+        ];
+        function buildImportedAutocadResponses() {
+            return IMPORTED_AUTOCAD_ROWS.map((d, i) => ({
+                id: 'imp' + (i + 1),
+                number: i + 1,
+                label: 'Respuesta ' + (i + 1),
+                timestamp: 'Importada del Excel',
+                imported: true,
+                answers: {
+                    q_1: d[0], q_2: String(d[2]), q_2r: d[1], q_3: d[3] + ' ciclo', q_4: d[4], q_5: d[5],
+                    q_6: String(d[6]), q_7: d[7] + ' ciclo', q_8: d[8], q_9: String(d[9]),
+                    q_10: d[10], q_11: d[11] === 'Ambos' ? 'Ambos (estudio y trabajo)' : d[11]
+                }
+            }));
+        }
+        function rangoDe(a) { return (a && a.q_2r) || calcularRangoEdad(a && a.q_2); }
+
+        function createOfficialUTPSurvey() {
+            const q = (id, type, title, extra) => Object.assign({ id, type, title, required: true }, extra || {});
+            return {
+                id: 'form_autocad_utp',
+                title: 'Encuesta: Importancia y satisfacción del uso de AutoCAD en estudiantes de ingeniería de la UTP',
+                subtitle: 'Universidad Tecnológica del Perú · Facultad de Ingeniería · Sección 39452 · 2026',
+                description: 'Esta encuesta es anónima y tiene fines académicos. Su objetivo es conocer tu opinión sobre el uso de AutoCAD en tu carrera. Responde con sinceridad; te tomará menos de 3 minutos.',
+                createdAt: 'Activo', createdTs: 1, acceptingResponses: true, schemaVersion: 2,
+                questions: [
+                    q('s_1', 'section', 'Datos generales', { required: false }),
+                    q('q_1', 'multiple', '1. ¿A qué facultad o carrera de ingeniería perteneces?', { options: ['Arquitectura', 'Ing. Eléctrica', 'Ing. Mecánica', 'Ing. Civil', 'Ing. Electromecánica', 'Ing. Software', 'Ing. Minas', 'Ing. Electrónica', 'Ing. Industrial'] }),
+                    q('q_2', 'short', '2. ¿Qué edad tienes? (en años)'),
+                    q('q_3', 'multiple', '3. ¿Qué ciclo estás cursando?', { options: ['Primer', 'Segundo', 'Tercer', 'Cuarto', 'Quinto', 'Sexto', 'Séptimo', 'Octavo', 'Noveno', 'Décimo'].map(c => c + ' ciclo') }),
+                    q('s_2', 'section', 'Experiencia con AutoCAD', { required: false }),
+                    q('q_4', 'multiple', '4. ¿Cómo evalúas la calidad de la enseñanza y el apoyo de los profesores en el uso del programa AutoCAD?', { options: ['Muy mala', 'Mala', 'Regular', 'Buena', 'Muy buena'] }),
+                    q('q_5', 'multiple', '5. ¿Crees que el programa AutoCAD te prepara adecuadamente para tu entorno laboral?', { options: ['Sí', 'No'] }),
+                    q('q_6', 'scale', '6. ¿Cómo calificarías tu nivel de satisfacción general con el programa AutoCAD? (1 = nada satisfecho, 10 = totalmente satisfecho)', { scaleMin: 1, scaleMax: 10 }),
+                    q('q_7', 'multiple', '7. ¿En qué año de estudio (ciclo) comenzaste a utilizar el programa AutoCAD en tu carrera de ingeniería?', { options: ['Primer', 'Segundo', 'Tercer', 'Cuarto', 'Quinto', 'Sexto', 'Séptimo', 'Octavo', 'Noveno', 'Décimo'].map(c => c + ' ciclo') }),
+                    q('q_8', 'multiple', '8. ¿Con qué frecuencia experimentas problemas al usar el programa AutoCAD?', { options: ['Nunca', 'Casi nunca', 'A veces', 'Casi siempre', 'Siempre'] }),
+                    q('q_9', 'short', '9. ¿Cuántos cursos o talleres de AutoCAD has tomado durante tu carrera de ingeniería?'),
+                    q('q_10', 'multiple', '10. ¿Qué tipo de máquina usas para el programa AutoCAD?', { options: ['Gama baja', 'Gama media', 'Gama alta'] }),
+                    q('q_11', 'multiple', '11. ¿Por qué usas el programa AutoCAD?', { options: ['Estudio', 'Trabajo', 'Ambos (estudio y trabajo)', 'Otras actividades'] })
+                ],
+                responses: []
+            };
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            updateAccountHeaderUI();
+            openDashboardHome();
+            try {
+                if (window.claude && window.claude.use) {
+                    userApi = await window.claude.use('user');
+                    db = await window.claude.use('db');
+                }
+            } catch (e) { db = null; userApi = null; }
+
+            if (!db || !userApi) {
+                // Modo local: sin base de datos ni cuenta; se ven las 197 respuestas y se puede exportar
+                currentUser = { name: 'Modo local', email: '', loggedIn: true, id: 'local', role: 'Sin conexión a la base de datos' };
+                updateAccountHeaderUI();
+                allForms = [createOfficialUTPSurvey()];
+                allForms[0].responses = buildImportedAutocadResponses();
+                surveyState = allForms[0];
+                openDashboardHome();
+                showToast('Modo local: ves las 197 respuestas y puedes descargar el Excel. Las respuestas nuevas no se guardan al cerrar.');
+                return;
+            }
+
+            const me = await userApi.me();
+            canAdmin = !!me.canEdit;
+            currentUser = {
+                name: me.name || me.email || 'Usuario',
+                email: me.email || '',
+                id: me.id || (await userApi.id()),
+                loggedIn: true,
+                isOwnerUser: !!me.isOwner,
+                role: me.isOwner ? 'Propietario' : (me.canEdit ? 'Editor' : 'Invitado')
+            };
+            updateAccountHeaderUI();
+            logLogin();
+            subscribeData();
+        });
+
+        async function logLogin() {
+            try {
+                const ref = db.doc('logins/' + currentUser.id);
+                const snap = await ref.get();
+                const d = snap.exists ? snap.data() : {};
+                const now = new Date().toISOString();
+                await ref.set({
+                    uid: currentUser.id,
+                    count: (d.count || 0) + 1,
+                    lastLogin: now,
+                    history: [...(d.history || []).slice(-19), now]
+                });
+            } catch (e) {}
+            subscribeLogins();
+        }
+
+        function subscribeLogins() {
+            const box = document.getElementById('loginLogBox');
+            const list = document.getElementById('loginLogList');
+            const draw = async (docs) => {
+                const ids = docs.map(d => d.uid);
+                let profs = {};
+                try { profs = await userApi.profiles(ids); } catch (e) {}
+                docs.sort((a, b) => (b.lastLogin || '').localeCompare(a.lastLogin || ''));
+                list.innerHTML = docs.map(d => {
+                    const p = profs[d.uid] || {};
+                    const nm = p.name || p.email || 'Usuario';
+                    const when = d.lastLogin ? new Date(d.lastLogin).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+                    return `<div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                        <div class="truncate"><p class="text-xs font-bold truncate">${escapeHtml(nm)}${p.isMe ? ' (tú)' : ''}</p>
+                        <p class="text-[10px] text-slate-500 truncate">${escapeHtml(p.email || '')} · último ingreso ${escapeHtml(when)}</p></div>
+                        <span class="text-[10px] font-bold accent-text shrink-0">${d.count || 1} ingresos</span></div>`;
+                }).join('') || '<p class="text-xs text-slate-500">Aún no hay ingresos.</p>';
+            };
+            box.classList.remove('hidden');
+            if (canAdmin) {
+                db.collection('logins').onSnapshot(s => draw(s.docs.map(x => x.data())), () => {});
+            } else {
+                document.getElementById('loginLogTitle').textContent = 'Tu actividad';
+                db.doc('logins/' + currentUser.id).onSnapshot(s => { if (s.exists) draw([s.data()]); }, () => {});
+            }
+        }
+
+        function subscribeData() {
+            db.collection('forms').onSnapshot(s => {
+                formsCache = {};
+                s.docs.forEach(d => { formsCache[d.id] = d.data(); lastSaved[d.id] = JSON.stringify(formMeta(d.data())); });
+                if (s.empty && canAdmin && !seeded) { seeded = true; saveForm(createOfficialUTPSurvey()); }
+                const old = formsCache['form_autocad_utp'];
+                if (old && canAdmin && (old.schemaVersion || 0) < 2 && !seeded) {
+                    seeded = true;
+                    const fresh = createOfficialUTPSurvey();
+                    saveForm(Object.assign({}, old, { title: fresh.title, subtitle: fresh.subtitle, description: fresh.description, questions: fresh.questions, schemaVersion: 2 }));
+                }
+                rebuildForms();
+            }, () => showToast('No se pudo leer la base de datos', 'error'));
+            db.collection('responses').onSnapshot(s => {
+                respCache = s.docs.map(d => d.data());
+                rebuildForms();
+            }, () => {});
+        }
+
+        function rebuildForms() {
+            const by = {};
+            respCache.forEach(r => { (by[r.formId] = by[r.formId] || []).push(r); });
+            const prevCount = surveyState ? (surveyState.responses || []).length : 0;
+            const list = Object.values(formsCache).filter(canSeeForm).sort((a, b) => (a.createdTs || 0) - (b.createdTs || 0));
+            const next = list.map(f => {
+                const o = (surveyState && surveyState.id === f.id && saveTimer) ? surveyState : Object.assign({}, f);
+                o.responses = (by[f.id] || []).sort((a, b) => (a.ts || 0) - (b.ts || 0)).map((r, i) => ({
+                    id: r.id, number: i + 1, label: 'Respuesta ' + (i + 1),
+                    timestamp: r.timestamp, answers: r.answers || {}, userId: r.userId
+                }));
+                if (f.id === 'form_autocad_utp') {
+                    o.responses = buildImportedAutocadResponses().concat(o.responses).map((r, i) => Object.assign({}, r, { number: i + 1, label: 'Respuesta ' + (i + 1) }));
+                }
+                return o;
+            });
+            allForms.filter(f => !formsCache[f.id]).forEach(f => next.push(f)); // formularios aún sin confirmar
+            allForms = next;
+            if (surveyState) { const m = allForms.find(f => f.id === surveyState.id); if (m) surveyState = m; }
+            else surveyState = allForms[0] || null;
+
+            if (!document.getElementById('view-dashboard').classList.contains('hidden')) {
+                renderDashboardCards();
+            } else if (surveyState && surveyState.responses.length !== prevCount) {
+                renderAll();
+            }
+        }
+
+        function formMeta(f) {
+            const m = Object.assign({}, f); delete m.responses;
+            return JSON.parse(JSON.stringify(m));
+        }
+
+        async function saveForm(f) {
+            if (!db || !f) return;
+            const m = formMeta(f);
+            if (!m.ownerId && currentUser.id) m.ownerId = currentUser.id;
+            if (!m.createdTs) m.createdTs = Date.now();
+            const s = JSON.stringify(m);
+            if (lastSaved[f.id] === s) return;
+            lastSaved[f.id] = s;
+            try { await db.doc('forms/' + f.id).set(m); }
+            catch (e) { delete lastSaved[f.id]; showToast('No se pudo guardar el formulario', 'error'); }
+        }
+
+        async function saveResponse(r) {
+            if (!db) return;
+            const formId = surveyState.id;
+            try {
+                await db.doc('responses/' + formId + '__' + r.id).set({
+                    formId, id: r.id, timestamp: r.timestamp, answers: r.answers,
+                    userId: currentUser.id, ts: Date.now()
+                });
+            } catch (e) { showToast('No se pudo guardar la respuesta', 'error'); }
+        }
+
+        function persistSurveyState() {
+            if (!db || !surveyState) return;
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(async () => { saveTimer = null; await saveForm(surveyState); }, 700);
+        }
+
+        async function saveFileOut(name, data) {
+            // 1) Descarga de la plataforma (si la página está publicada en Claude)
+            try {
+                if (window.claude && window.claude.use) {
+                    const d = await window.claude.use('downloads');
+                    if (d) { await d.save({ filename: name, data }); return true; }
+                }
+            } catch (e) { if (e && e.code === 'declined') return false; }
+            // 2) Descarga normal del navegador (funciona abriendo el .html en tu PC)
+            try {
+                const blob = data instanceof Blob ? data : new Blob([data], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = name;
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 2000);
+                return true;
+            } catch (e) { showToast('No se pudo descargar el archivo', 'error'); return false; }
+        }
+
+        // =========================================================================
+        // CUENTA (SESIÓN REAL) Y TEMA VISUAL
+        // =========================================================================
+        function toggleLoginModal() {
+            document.getElementById('loginModal').classList.toggle('hidden');
+            updateAccountHeaderUI();
+        }
+
+        function updateAccountHeaderUI() {
+            const nameEl = document.getElementById('userNameDisplay');
+            const badgeEl = document.getElementById('userInitialsBadge');
+            const loggedCard = document.getElementById('loggedUserCard');
+            const formBox = document.getElementById('loginFormBox');
+
+            if (currentUser && currentUser.loggedIn) {
+                const parts = currentUser.name.split(' ');
+                nameEl.textContent = parts[0];
+                const initials = ((parts[0]?.[0] || 'U') + (parts[1]?.[0] || '')).toUpperCase();
+                badgeEl.textContent = initials;
+                loggedCard.classList.remove('hidden');
+                formBox.classList.add('hidden');
+                document.getElementById('modalUserName').textContent = currentUser.name;
+                document.getElementById('modalUserEmail').textContent = [currentUser.role, currentUser.email].filter(Boolean).join(' · ');
+                document.getElementById('modalUserInitials').textContent = initials;
+            } else {
+                nameEl.textContent = 'Iniciar sesión';
+                badgeEl.innerHTML = '<i class="fa-regular fa-user text-[10px]"></i>';
+                loggedCard.classList.add('hidden');
+                formBox.classList.remove('hidden');
+            }
+        }
+
+        // =========================================================================
+        // QUIÉN VE CADA FORMULARIO (privado / personas elegidas / todos)
+        // =========================================================================
+        function canSeeForm(f) {
+            if (!f.visibility || f.visibility === 'all') return true; // formularios antiguos sin ajuste
+            if (currentUser.isOwnerUser || f.ownerId === currentUser.id) return true;
+            return f.visibility === 'people' && (f.sharedWith || []).includes(currentUser.id);
+        }
+
+        function visLabel(f) {
+            if (f.visibility === 'private') return 'Solo yo';
+            if (f.visibility === 'people') return 'Personas (' + (f.sharedWith || []).length + ')';
+            return 'Todos';
+        }
+
+        let shareFormId = null, shareDraft = null;
+
+        function openShareModal(id) {
+            const f = allForms.find(x => x.id === id);
+            if (!f) return;
+            const mine = currentUser.isOwnerUser || f.ownerId === currentUser.id || (!f.ownerId && canAdmin);
+            if (!db || !mine) { showToast('Solo quien creó el formulario puede cambiar quién lo ve', 'error'); return; }
+            shareFormId = id;
+            shareDraft = { visibility: f.visibility || 'all', sharedWith: [...(f.sharedWith || [])] };
+            document.getElementById('shareFormName').textContent = f.title;
+            document.getElementById('shareModal').classList.remove('hidden');
+            renderShare();
+        }
+
+        function closeShareModal() { document.getElementById('shareModal').classList.add('hidden'); }
+
+        function setShareVis(v) { shareDraft.visibility = v; renderShare(); }
+
+        function renderShare() {
+            const opts = [
+                ['private', 'Solo yo', 'Nadie más ve este formulario ni sus respuestas.'],
+                ['people', 'Personas elegidas', 'Solo quienes agregues abajo.'],
+                ['all', 'Todos los que inicien sesión', 'Cualquiera con acceso a la página.']
+            ];
+            let h = opts.map(([v, t, d]) => `<label class='flex gap-3 p-3 rounded-xl border cursor-pointer ${shareDraft.visibility === v ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30' : 'border-slate-200 dark:border-slate-700'}'><input type='radio' name='vis' class='mt-1' ${shareDraft.visibility === v ? 'checked' : ''} onchange="setShareVis('${v}')"><span><b class='text-xs block'>${t}</b><span class='text-[11px] text-slate-500'>${d}</span></span></label>`).join('');
+            if (shareDraft.visibility === 'people') {
+                h += `<input id='sharePeopleSearch' oninput='searchSharePeople(this.value)' onfocus='searchSharePeople(this.value)' placeholder='Buscar por nombre o correo' class='w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:border-indigo-500'><div id='shareResults' class='space-y-1'></div><p class='text-[11px] font-bold text-slate-600 dark:text-slate-300 pt-1'>Con acceso</p><div id='shareChosen' class='space-y-1'></div>`;
+            }
+            document.getElementById('shareBody').innerHTML = h;
+            if (shareDraft.visibility === 'people') { drawChosenPeople(); searchSharePeople(''); }
+        }
+
+        function personRow(p, action, label) {
+            return `<div class='flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700'><div class='truncate'><p class='text-xs font-bold truncate'>${escapeHtml(p.name || p.email || 'Usuario')}</p><p class='text-[10px] text-slate-500 truncate'>${escapeHtml(p.email || '')}</p></div><button onclick="${action}('${escapeHtml(p.id)}')" class='text-[11px] font-bold accent-text shrink-0'>${label}</button></div>`;
+        }
+
+        async function drawChosenPeople() {
+            const el = document.getElementById('shareChosen');
+            if (!el) return;
+            if (!shareDraft.sharedWith.length) { el.innerHTML = "<p class='text-xs text-slate-500'>Todavía no agregaste a nadie.</p>"; return; }
+            let profs = {};
+            try { profs = await userApi.profiles(shareDraft.sharedWith); } catch (e) {}
+            el.innerHTML = shareDraft.sharedWith.map(id => personRow(Object.assign({ id }, profs[id] || {}), 'removeSharePerson', 'Quitar')).join('');
+        }
+
+        async function searchSharePeople(q) {
+            const el = document.getElementById('shareResults');
+            if (!el) return;
+            let res = [];
+            try { res = await userApi.search(q || ''); } catch (e) {}
+            res = res.filter(p => !p.isMe && !shareDraft.sharedWith.includes(p.id)).slice(0, 6);
+            el.innerHTML = res.map(p => personRow(p, 'addSharePerson', 'Agregar')).join('') || "<p class='text-xs text-slate-500'>Sin resultados.</p>";
+        }
+
+        function addSharePerson(id) { if (!shareDraft.sharedWith.includes(id)) shareDraft.sharedWith.push(id); drawChosenPeople(); searchSharePeople(document.getElementById('sharePeopleSearch').value); }
+        function removeSharePerson(id) { shareDraft.sharedWith = shareDraft.sharedWith.filter(x => x !== id); drawChosenPeople(); searchSharePeople(document.getElementById('sharePeopleSearch').value); }
+
+        async function saveShare() {
+            const f = allForms.find(x => x.id === shareFormId);
+            if (!f) return;
+            f.visibility = shareDraft.visibility;
+            f.sharedWith = shareDraft.visibility === 'people' ? shareDraft.sharedWith : [];
+            await saveForm(f);
+            closeShareModal();
+            renderDashboardCards();
+            showToast('Acceso actualizado: ' + visLabel(f));
+        }
+
+        // =========================================================================
+        // ELIMINAR RESPUESTA
+        // =========================================================================
+        function canManageForm(f) {
+            return !!db && !!f && (currentUser.isOwnerUser || canAdmin || f.ownerId === currentUser.id);
+        }
+
+        let delConfirmTimer = null;
+
+        async function deleteCurrentResponse() {
+            const btn = document.getElementById('delRespBtn');
+            if (btn && !btn.dataset.armed) {
+                btn.dataset.armed = '1';
+                btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Confirmar: se borra para siempre';
+                clearTimeout(delConfirmTimer);
+                delConfirmTimer = setTimeout(() => {
+                    if (btn.isConnected) { delete btn.dataset.armed; btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> Eliminar respuesta'; }
+                }, 4000);
+                return;
+            }
+            clearTimeout(delConfirmTimer);
+            const f = surveyState;
+            const resp = f && f.responses[currentIndividualIdx];
+            if (!resp || !canManageForm(f)) return;
+            if (resp.imported) { showToast('Las respuestas importadas del Excel no se pueden eliminar', 'error'); return; }
+            try {
+                await db.doc('responses/' + f.id + '__' + resp.id).delete();
+            } catch (e) {
+                showToast('No se pudo eliminar la respuesta', 'error');
+                return;
+            }
+            const i = f.responses.findIndex(r => r.id === resp.id);
+            if (i >= 0) f.responses.splice(i, 1);
+            respCache = respCache.filter(r => !(r.formId === f.id && r.id === resp.id));
+            currentIndividualIdx = Math.max(0, Math.min(currentIndividualIdx, f.responses.length - 1));
+            renderResponsesTab();
+            showToast('Respuesta eliminada');
+        }
+
+        function toggleThemeDrawer() {
+            const drawer = document.getElementById('themeDrawer');
+            drawer.classList.toggle('translate-x-full');
+        }
+
+        function setAccentTheme(color, hover, light) {
+            document.documentElement.style.setProperty('--accent', color);
+            document.documentElement.style.setProperty('--accent-hover', hover);
+            document.documentElement.style.setProperty('--accent-light', light);
+            showToast('Color de tema actualizado');
+        }
+
+        function setFontStyle(fontClass) {
+            document.body.classList.remove('font-jakarta', 'font-sans', 'font-serif');
+            document.body.classList.add(fontClass);
+            showToast('Tipografía actualizada');
+        }
+
+        // =========================================================================
+        // PANEL PRINCIPAL (PROYECTOS Y FORMULARIOS CREADOS)
+        // =========================================================================
+        function openDashboardHome() {
+            document.getElementById('view-dashboard').classList.remove('hidden');
+            document.getElementById('view-builder').classList.add('hidden');
+            document.getElementById('view-preview').classList.add('hidden');
+            document.getElementById('view-responses').classList.add('hidden');
+            document.getElementById('formEditorTabs').classList.add('hidden');
+            document.getElementById('formEditorTabs').classList.remove('flex');
+
+            document.getElementById('navFormTitle').textContent = 'Mis Proyectos y Formularios';
+            renderDashboardCards();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderDashboardCards() {
+            const container = document.getElementById('formsGridContainer');
+            container.innerHTML = '';
+
+            document.getElementById('statTotalForms').textContent = allForms.length;
+            const navProjCount = document.getElementById('navProjectsCount');
+            if (navProjCount) navProjCount.textContent = allForms.length;
+
+            allForms.forEach((form) => {
+                const qCount = form.questions.filter(q => q.type !== 'section').length;
+                const rCount = form.responses?.length || 0;
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 transition-all p-6 flex flex-col justify-between gap-5 shadow-xs hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-700";
+
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold accent-light-bg accent-text">
+                                <i class="fa-regular fa-file-lines mr-1"></i> Encuesta Web
+                            </span>
+                            <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
+                                <i class="fa-solid fa-chart-simple mr-1"></i> ${rCount} respuestas
+                            </span>
+                        </div>
+
+                        <h3 onclick="openFormById('${form.id}', 'builder')" class="text-lg font-extrabold text-slate-900 dark:text-white hover:text-indigo-600 cursor-pointer leading-snug">
+                            ${escapeHtml(form.title)}
+                        </h3>
+
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            ${escapeHtml(form.subtitle || form.description || 'Sin descripción')}
+                        </p>
+                    </div>
+
+                    <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
+                            <span><i class="fa-regular fa-circle-question mr-1"></i> ${qCount} preguntas</span>
+                            <button onclick="openShareModal('${form.id}')" title="Cambiar quién ve este formulario" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[11px] font-bold"><i class="fa-solid fa-user-lock mr-1 accent-text"></i> ${visLabel(form)}</button>
+                            <span><i class="fa-regular fa-clock mr-1"></i> ${escapeHtml(form.createdAt || 'Activo')}</span>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="openFormById('${form.id}', 'builder')" class="px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-pen-ruler accent-text"></i> Preguntas
+                            </button>
+                            <button onclick="openFormById('${form.id}', 'preview')" class="px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-eye text-indigo-500"></i> Vista Previa
+                            </button>
+                            <button onclick="openFormById('${form.id}', 'responses')" class="px-3 py-2.5 rounded-xl accent-bg accent-bg-hover text-white text-xs font-bold shadow-xs transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-chart-pie"></i> Respuestas
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openFormById(formId, initialTab = 'builder') {
+            const found = allForms.find(f => f.id === formId);
+            if (!found) return;
+            surveyState = found;
+
+            document.getElementById('view-dashboard').classList.add('hidden');
+            const editorTabs = document.getElementById('formEditorTabs');
+            editorTabs.classList.remove('hidden');
+            editorTabs.classList.add('flex');
+
+            renderAll();
+            switchTab(initialTab);
+        }
+
+        function createNewBlankForm() {
+            const newId = 'form_' + Date.now();
+            const newForm = {
+                id: newId,
+                title: "Nuevo Formulario sin título",
+                subtitle: "Creado por " + currentUser.name,
+                description: "Escribe aquí las instrucciones o propósito de tu encuesta.",
+                createdAt: new Date().toLocaleDateString("es-PE"),
+                acceptingResponses: true,
+                questions: [
+                    {
+                        id: "q_new_1",
+                        type: "multiple",
+                        title: "1. Pregunta de ejemplo",
+                        required: true,
+                        options: ["Opción 1", "Opción 2", "Opción 3"]
+                    }
+                ],
+                responses: []
+            };
+            newForm.visibility = 'private'; newForm.sharedWith = [];
+            allForms.push(newForm);
+            saveForm(newForm);
+            openFormById(newId, 'builder');
+            showToast('Nuevo formulario en blanco creado');
+        }
+
+        function createFormFromTemplate(type) {
+            const newId = 'form_' + Date.now();
+            const tplForm = {
+                id: newId,
+                title: "Encuesta de Satisfacción de Laboratorio de Ingeniería",
+                subtitle: "Facultad de Ingeniería UTP · 2026",
+                description: "Evalúa el equipamiento y software disponible en los laboratorios especializados.",
+                createdAt: "Hoy",
+                acceptingResponses: true,
+                questions: [
+                    {
+                        id: "q_t1",
+                        type: "multiple",
+                        title: "1. ¿Cómo calificarías el estado de los equipos del laboratorio?",
+                        required: true,
+                        options: ["Excelente", "Bueno", "Regular", "Deficiente"]
+                    },
+                    {
+                        id: "q_t2",
+                        type: "scale",
+                        title: "2. Nivel de satisfacción general con las licencias de software (1-10)",
+                        required: true,
+                        scaleMin: 1,
+                        scaleMax: 10
+                    }
+                ],
+                responses: []
+            };
+            tplForm.visibility = 'private'; tplForm.sharedWith = [];
+            allForms.push(tplForm);
+            saveForm(tplForm);
+            openFormById(newId, 'builder');
+            showToast('Plantilla académica creada');
+        }
+
+        // =========================================================================
+        // NAVEGACIÓN ENTRE PESTAÑAS DEL FORMULARIO ACTIVO
+        // =========================================================================
+        function switchTab(tabName) {
+            document.getElementById('view-dashboard').classList.add('hidden');
+            const views = ['builder', 'preview', 'responses'];
+            views.forEach(v => {
+                const section = document.getElementById(`view-${v}`);
+                const btn = document.getElementById(`tab-${v}`);
+                if (v === tabName) {
+                    section.classList.remove('hidden');
+                    btn.className = "tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 bg-white dark:bg-slate-900 shadow-sm accent-text";
+                } else {
+                    section.classList.add('hidden');
+                    btn.className = "tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900";
+                }
+            });
+
+            if (tabName === 'preview') renderPreviewForm();
+            if (tabName === 'responses') renderResponsesTab();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderAll() {
+            if (!surveyState) return;
+            const rCount = surveyState.responses.length;
+            document.getElementById('formTitleInput').value = surveyState.title;
+            document.getElementById('formDescInput').value = surveyState.description;
+            document.getElementById('navFormTitle').textContent = surveyState.title;
+            document.getElementById('navResponseBadge').textContent = rCount;
+            document.getElementById('builderRespCountBtn').textContent = rCount;
+            document.getElementById('previewRespCountBtn').textContent = rCount;
+
+            renderBuilderQuestions();
+            renderPreviewForm();
+            renderResponsesTab();
+            persistSurveyState();
+        }
+
+        function updateFormMeta(field, val) {
+            surveyState[field] = val;
+            if (field === 'title') document.getElementById('navFormTitle').textContent = val;
+            persistSurveyState();
+        }
+
+        // =========================================================================
+        // 1. CONSTRUCTOR DE PREGUNTAS
+        // =========================================================================
+        function renderBuilderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+
+            surveyState.questions.forEach((q, idx) => {
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden";
+
+                if (q.type === 'section') {
+                    card.innerHTML = `
+                        <div class="bg-rose-50/80 dark:bg-rose-950/40 px-6 py-3 border-b border-rose-200/60 dark:border-rose-900/50 flex items-center justify-between">
+                            <span class="text-xs font-extrabold uppercase tracking-wider accent-text flex items-center gap-2">
+                                <i class="fa-solid fa-layer-group"></i> Bloque de Sección
+                            </span>
+                            <button onclick="deleteQuestion('${q.id}')" class="text-xs text-slate-400 hover:text-rose-600"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                        <div class="p-6 space-y-2">
+                            <input type="text" value="${escapeHtml(q.title)}" oninput="updateQuestionField('${q.id}', 'title', this.value)" class="w-full text-lg font-extrabold bg-transparent border-b border-slate-200 dark:border-slate-700 pb-1 focus:outline-none">
+                            <input type="text" value="${escapeHtml(q.description || '')}" oninput="updateQuestionField('${q.id}', 'description', this.value)" class="w-full text-xs text-slate-500 bg-transparent focus:outline-none" placeholder="Subtítulo de la sección...">
+                        </div>
+                    `;
+                    container.appendChild(card);
+                    return;
+                }
+
+                let bodyHtml = '';
+                if (q.type === 'multiple') {
+                    bodyHtml = `<div class="space-y-2 pt-2">` + (q.options || []).map((opt, oi) => `
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-regular fa-circle text-slate-400 text-xs"></i>
+                            <input type="text" value="${escapeHtml(opt)}" oninput="updateOptionText('${q.id}', ${oi}, this.value)" class="flex-1 text-xs sm:text-sm bg-transparent border-b border-transparent focus:border-rose-500 py-1 focus:outline-none">
+                            <button onclick="removeOption('${q.id}', ${oi})" class="text-slate-300 hover:text-rose-500 text-xs"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    `).join('') + `
+                        <button onclick="addOption('${q.id}')" class="text-xs font-bold accent-text hover:underline pt-1 inline-flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> Añadir opción
+                        </button>
+                    </div>`;
+                } else if (q.type === 'short') {
+                    bodyHtml = `
+                        <div class="pt-2 flex items-center gap-2 text-xs text-slate-400">
+                            <span>Respuesta:</span>
+                            <span class="px-4 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-700">______</span>
+                            <span class="font-semibold text-slate-600 dark:text-slate-300">${escapeHtml(q.unitSuffix || '')}</span>
+                        </div>
+                    `;
+                } else if (q.type === 'scale') {
+                    let boxes = '';
+                    for (let n = 1; n <= 10; n++) {
+                        boxes += `<span class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold">☐ ${n}</span>`;
+                    }
+                    bodyHtml = `<div class="pt-2 flex flex-wrap gap-2">${boxes}</div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="p-6 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <input type="text" value="${escapeHtml(q.title)}" oninput="updateQuestionField('${q.id}', 'title', this.value)" class="flex-1 font-bold text-sm sm:text-base bg-slate-50 dark:bg-slate-800/60 px-3 py-2 rounded-xl border border-slate-200/80 dark:border-slate-700 focus:outline-none">
+                            <div class="flex items-center gap-2 shrink-0">
+                                <span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                    ${q.type === 'multiple' ? 'Opción Múltiple' : (q.type === 'scale' ? 'Escala 1-10' : 'Respuesta Numérica')}
+                                </span>
+                                <button onclick="deleteQuestion('${q.id}')" class="p-2 text-slate-400 hover:text-rose-600"><i class="fa-regular fa-trash-can text-xs"></i></button>
+                            </div>
+                        </div>
+                        ${bodyHtml}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateQuestionField(qId, field, value) {
+            const q = surveyState.questions.find(item => item.id === qId);
+            if (q) {
+                q[field] = value;
+                persistSurveyState();
+            }
+        }
+
+        function updateOptionText(qId, idx, val) {
+            const q = surveyState.questions.find(item => item.id === qId);
+            if (q && q.options) {
+                q.options[idx] = val;
+                persistSurveyState();
+            }
+        }
+
+        function addOption(qId) {
+            const q = surveyState.questions.find(item => item.id === qId);
+            if (q && q.options) {
+                q.options.push(`Nueva opción ${q.options.length + 1}`);
+                renderBuilderQuestions();
+                persistSurveyState();
+            }
+        }
+
+        function removeOption(qId, idx) {
+            const q = surveyState.questions.find(item => item.id === qId);
+            if (q && q.options && q.options.length > 1) {
+                q.options.splice(idx, 1);
+                renderBuilderQuestions();
+                persistSurveyState();
+            }
+        }
+
+        function addQuestion(type) {
+            const newId = 'q_' + Date.now();
+            const newQ = {
+                id: newId,
+                type: type,
+                title: type === 'section' ? 'Nueva Sección' : `${surveyState.questions.filter(x => x.type !== 'section').length + 1}. Nueva pregunta`,
+                required: true
+            };
+            if (type === 'multiple') newQ.options = ['Opción 1', 'Opción 2', 'Opción 3'];
+            if (type === 'scale') { newQ.scaleMin = 1; newQ.scaleMax = 10; }
+            surveyState.questions.push(newQ);
+            renderBuilderQuestions();
+            persistSurveyState();
+            showToast('Pregunta añadida');
+        }
+
+        function deleteQuestion(qId) {
+            if (surveyState.questions.length <= 1) return;
+            surveyState.questions = surveyState.questions.filter(q => q.id !== qId);
+            renderBuilderQuestions();
+            persistSurveyState();
+        }
+
+        // =========================================================================
+        // 2. MODO VISTA PREVIA / RESPONDER ENCUESTA
+        // =========================================================================
+        function renderPreviewForm() {
+            document.getElementById('previewSuccessState').classList.add('hidden');
+            document.getElementById('previewFormWrapper').classList.remove('hidden');
+
+            document.getElementById('previewFormTitle').textContent = surveyState.title;
+            document.getElementById('previewFormDesc').textContent = surveyState.description;
+
+            const list = document.getElementById('previewQuestionsList');
+            list.innerHTML = '';
+
+            surveyState.questions.forEach(q => {
+                if (q.type === 'section') {
+                    const sec = document.createElement('div');
+                    sec.className = "pt-4 pb-1 border-b-2 border-rose-600/30";
+                    sec.innerHTML = `
+                        <h3 class="text-lg font-extrabold accent-text uppercase tracking-wide">${escapeHtml(q.title)}</h3>
+                        ${q.description ? `<p class="text-xs text-slate-500">${escapeHtml(q.description)}</p>` : ''}
+                    `;
+                    list.appendChild(sec);
+                    return;
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 shadow-xs space-y-3";
+
+                let inputHtml = '';
+                if (q.type === 'multiple') {
+                    inputHtml = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">` + (q.options || []).map(opt => `
+                        <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 hover:bg-rose-50/40 dark:hover:bg-slate-800 cursor-pointer transition">
+                            <input type="radio" name="${q.id}" value="${escapeHtml(opt)}" required class="w-4 h-4 accent-rose-600">
+                            <span class="text-xs sm:text-sm font-medium">${escapeHtml(opt)}</span>
+                        </label>
+                    `).join('') + `</div>`;
+                } else if (q.type === 'short') {
+                    inputHtml = `
+                        <div class="flex items-center gap-3 pt-1">
+                            <span class="text-xs font-bold text-slate-500">Respuesta:</span>
+                            <input type="number" name="${q.id}" required min="0" max="99" placeholder="Escribe el número" class="w-40 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm font-bold focus:outline-none focus:border-rose-600">
+                            <span class="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">${escapeHtml(q.unitSuffix || '')}</span>
+                        </div>
+                    `;
+                } else if (q.type === 'scale') {
+                    let boxes = '';
+                    for (let n = 1; n <= 10; n++) {
+                        boxes += `
+                            <label class="flex-1 min-w-[44px] cursor-pointer">
+                                <input type="radio" name="${q.id}" value="${n}" required class="sr-only peer">
+                                <div class="py-2.5 px-2 rounded-xl border border-slate-200 dark:border-slate-700 text-center text-xs sm:text-sm font-extrabold peer-checked:bg-rose-600 peer-checked:text-white peer-checked:border-rose-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                                    ☐ ${n}
+                                </div>
+                            </label>
+                        `;
+                    }
+                    inputHtml = `<div class="flex flex-wrap gap-2 pt-2">${boxes}</div>`;
+                }
+
+                card.innerHTML = `
+                    <label class="block text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                        ${escapeHtml(q.title)} <span class="text-rose-600">*</span>
+                    </label>
+                    ${inputHtml}
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function submitSurveyResponse(e) {
+            e.preventDefault();
+            const form = document.getElementById('liveSurveyForm');
+            const fd = new FormData(form);
+            const collected = {};
+            let missing = false;
+
+            surveyState.questions.forEach(q => {
+                if (q.type === 'section') return;
+                const val = fd.get(q.id);
+                if (q.required && (!val || val.trim() === '')) {
+                    missing = true;
+                } else if (val) {
+                    collected[q.id] = val.trim();
+                }
+            });
+
+            if (missing) {
+                showToast('Por favor responde todas las preguntas de la encuesta', 'error');
+                return;
+            }
+
+            const nextNum = surveyState.responses.length + 1;
+            const newResp = {
+                id: 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+                number: nextNum,
+                label: `Respuesta ${nextNum}`,
+                timestamp: new Date().toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' }),
+                answers: collected
+            };
+
+            surveyState.responses.push(newResp);
+            saveResponse(newResp);
+
+            document.getElementById('navResponseBadge').textContent = surveyState.responses.length;
+            document.getElementById('previewFormWrapper').classList.add('hidden');
+            document.getElementById('previewSuccessState').classList.remove('hidden');
+            showToast(`¡Guardada como Respuesta ${nextNum}!`);
+        }
+
+        function clearPreviewForm() {
+            document.getElementById('liveSurveyForm').reset();
+        }
+
+        function resetPreviewAfterSubmit() {
+            clearPreviewForm();
+            renderPreviewForm();
+        }
+
+        // =========================================================================
+        // 3. PESTAÑA RESPUESTAS: VISOR "RESPUESTA 1, RESPUESTA 2..." + GRÁFICOS + EXCEL
+        // =========================================================================
+        function renderResponsesTab() {
+            const total = surveyState.responses.length;
+            document.getElementById('totalResponsesCount').textContent = total;
+            document.getElementById('navResponseBadge').textContent = total;
+            document.getElementById('totalIndividualCount').textContent = total;
+            document.getElementById('jumpToRespInput').max = total;
+
+            filteredIndividualIndices = surveyState.responses.map((_, i) => i);
+            renderIndividualSidebarList();
+            renderIndividualResponseView();
+            renderSummaryCharts();
+            renderSpreadsheetTable('');
+        }
+
+        function switchResponseSubTab(subTab) {
+            const tabs = ['individual', 'summary', 'table'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`subtab-${t}`);
+                if (t === subTab) {
+                    btn.className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white dark:bg-slate-900 shadow-sm accent-text transition flex items-center gap-2";
+                } else {
+                    btn.className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 transition flex items-center gap-2";
+                }
+            });
+
+            document.getElementById('responsesIndividualContainer').classList.toggle('hidden', subTab !== 'individual');
+            document.getElementById('responsesSummaryContainer').classList.toggle('hidden', subTab !== 'summary');
+            document.getElementById('responsesTableContainer').classList.toggle('hidden', subTab !== 'table');
+        }
+
+        // Filtra la barra lateral de Respuesta 1, Respuesta 2...
+        function filterIndividualResponseList(query) {
+            const q = (query || '').toLowerCase().trim();
+            filteredIndividualIndices = [];
+            surveyState.responses.forEach((resp, idx) => {
+                const label = `respuesta ${idx + 1}`;
+                const fac = (resp.answers['q_1'] || '').toLowerCase();
+                const edad = (resp.answers['q_2'] || '').toLowerCase();
+                const ciclo = (resp.answers['q_3'] || '').toLowerCase();
+                if (!q || label.includes(q) || String(idx + 1) === q || fac.includes(q) || edad.includes(q) || ciclo.includes(q)) {
+                    filteredIndividualIndices.push(idx);
+                }
+            });
+            document.getElementById('filteredRespCountLabel').textContent = filteredIndividualIndices.length;
+            renderIndividualSidebarList();
+        }
+
+        function renderIndividualSidebarList() {
+            const listEl = document.getElementById('responseSidebarList');
+            listEl.innerHTML = '';
+
+            filteredIndividualIndices.forEach(idx => {
+                const resp = surveyState.responses[idx];
+                const isSelected = idx === currentIndividualIdx;
+                const fac = resp.answers['q_1'] || 'Estudiante';
+                const edad = resp.answers['q_2'] ? `${resp.answers['q_2']} años` : '';
+                const ciclo = resp.answers['q_3'] || '';
+
+                const btn = document.createElement('button');
+                btn.onclick = () => selectIndividualResponse(idx);
+                btn.className = `w-full text-left p-3 rounded-xl transition flex items-center justify-between gap-2 ${
+                    isSelected
+                        ? 'accent-bg text-white shadow-sm font-bold'
+                        : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                }`;
+
+                btn.innerHTML = `
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs sm:text-sm font-extrabold">Respuesta ${idx + 1}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'} font-semibold truncate">
+                                ${escapeHtml(fac)}
+                            </span>
+                        </div>
+                        <p class="text-[11px] ${isSelected ? 'text-rose-100' : 'text-slate-400'} truncate mt-0.5">
+                            ${escapeHtml(edad)} · ${escapeHtml(ciclo)}
+                        </p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs ${isSelected ? 'text-white' : 'text-slate-300'}"></i>
+                `;
+                listEl.appendChild(btn);
+            });
+        }
+
+        function selectIndividualResponse(idx) {
+            currentIndividualIdx = idx;
+            document.getElementById('jumpToRespInput').value = idx + 1;
+            renderIndividualSidebarList();
+            renderIndividualResponseView();
+        }
+
+        function navigateIndividual(dir) {
+            const total = surveyState.responses.length;
+            if (total === 0) return;
+            currentIndividualIdx = (currentIndividualIdx + dir + total) % total;
+            document.getElementById('jumpToRespInput').value = currentIndividualIdx + 1;
+            renderIndividualSidebarList();
+            renderIndividualResponseView();
+        }
+
+        function jumpToResponseNumber(val) {
+            const num = parseInt(val);
+            if (isNaN(num) || num < 1 || num > surveyState.responses.length) return;
+            selectIndividualResponse(num - 1);
+        }
+
+        // Dibuja la Hoja de Respuestas completa del estudiante mostrando TODO lo que dijo y marcó
+        function renderIndividualResponseView() {
+            const total = surveyState.responses.length;
+            if (total === 0) {
+                document.getElementById('individualResponseContent').innerHTML = '';
+                return;
+            }
+            if (currentIndividualIdx >= total) currentIndividualIdx = total - 1;
+
+            const resp = surveyState.responses[currentIndividualIdx];
+            const respNum = currentIndividualIdx + 1;
+            document.getElementById('currentIndividualTitleBadge').textContent = `Respuesta ${respNum}`;
+
+            const content = document.getElementById('individualResponseContent');
+            content.innerHTML = '';
+
+            // Cabecera resumen del encuestado
+            const headerCard = document.createElement('div');
+            headerCard.className = "bg-gradient-to-r from-slate-900 to-rose-950 text-white rounded-2xl p-6 shadow-md flex flex-wrap items-center justify-between gap-4";
+            const edadVal = resp.answers['q_2'] || '—';
+            headerCard.innerHTML = `
+                <div class="space-y-1">
+                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                        <i class="fa-solid fa-check-circle mr-1"></i> Hoja de Encuesta Verificada
+                    </span>
+                    <h3 class="text-xl sm:text-2xl font-extrabold">Respuesta ${respNum}</h3>
+                    <p class="text-xs text-rose-200">
+                        ${escapeHtml(resp.answers['q_1'] || '')} · ${escapeHtml(edadVal)} años (${rangoDe(resp.answers)}) · ${escapeHtml(resp.answers['q_3'] || '')}
+                    </p>
+                </div>
+                <div class="bg-white/10 px-4 py-2.5 rounded-xl border border-white/10 text-right">
+                    <p class="text-[11px] text-rose-200">Satisfacción AutoCAD</p>
+                    <p class="text-xl font-extrabold text-white">${escapeHtml(resp.answers['q_6'] || '—')} <span class="text-xs font-normal text-rose-200">/ 10</span></p>
+                </div>
+                ${canManageForm(surveyState) ? `<button id="delRespBtn" onclick="deleteCurrentResponse()" class="px-3 py-2 rounded-xl bg-rose-600/90 hover:bg-rose-500 text-white text-xs font-bold transition flex items-center gap-1.5"><i class="fa-solid fa-trash-can"></i> Eliminar respuesta</button>` : ''}
+            `;
+            content.appendChild(headerCard);
+
+            // Renderizar cada pregunta mostrando todas las opciones y resaltando la opción que marcó
+            surveyState.questions.forEach(q => {
+                if (q.type === 'section') {
+                    const sec = document.createElement('div');
+                    sec.className = "pt-3 pb-1 border-b border-slate-200 dark:border-slate-800";
+                    sec.innerHTML = `<h4 class="text-sm font-extrabold uppercase tracking-wider accent-text">${escapeHtml(q.title)}</h4>`;
+                    content.appendChild(sec);
+                    return;
+                }
+
+                const userAns = resp.answers[q.id];
+                const qCard = document.createElement('div');
+                qCard.className = "bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-xs space-y-3";
+
+                let markedDetailsHtml = '';
+
+                if (q.type === 'multiple') {
+                    markedDetailsHtml = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">` + (q.options || []).map(opt => {
+                        const isMarked = String(userAns) === String(opt);
+                        return `
+                            <div class="flex items-center justify-between p-2.5 rounded-xl border text-xs sm:text-sm transition ${
+                                isMarked
+                                    ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-950 dark:text-emerald-200 font-extrabold shadow-xs'
+                                    : 'bg-slate-50/50 dark:bg-slate-800/30 border-slate-200/60 dark:border-slate-800 text-slate-400'
+                            }">
+                                <div class="flex items-center gap-2.5 truncate">
+                                    <i class="fa-solid ${isMarked ? 'fa-circle-check text-emerald-600 dark:text-emerald-400 text-base' : 'fa-regular fa-circle text-slate-300 dark:text-slate-600'}"></i>
+                                    <span class="truncate">${escapeHtml(opt)}</span>
+                                </div>
+                                ${isMarked ? `<span class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-600 text-white font-bold shrink-0">Marcado</span>` : ''}
+                            </div>
+                        `;
+                    }).join('') + `</div>`;
+                } else if (q.type === 'short') {
+                    markedDetailsHtml = `
+                        <div class="flex items-center gap-3 p-3.5 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/50 border border-emerald-400 dark:border-emerald-700">
+                            <i class="fa-solid fa-pen-clip text-emerald-600"></i>
+                            <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Lo que respondió:</span>
+                            <span class="text-base font-extrabold text-emerald-800 dark:text-emerald-200 underline decoration-2">
+                                ${escapeHtml(String(userAns || '0'))} ${escapeHtml(q.unitSuffix || '')}
+                            </span>
+                        </div>
+                    `;
+                } else if (q.type === 'scale') {
+                    let boxes = '';
+                    for (let n = 1; n <= 10; n++) {
+                        const isMarked = String(userAns) === String(n);
+                        boxes += `
+                            <div class="flex-1 min-w-[42px] py-2.5 px-1.5 rounded-xl border text-center text-xs font-extrabold transition ${
+                                isMarked
+                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-105'
+                                    : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-400'
+                            }">
+                                ${isMarked ? '☑' : '☐'} ${n}
+                            </div>
+                        `;
+                    }
+                    markedDetailsHtml = `<div class="flex flex-wrap gap-1.5 pt-1">${boxes}</div>`;
+                }
+
+                qCard.innerHTML = `
+                    <div class="flex items-start justify-between gap-2">
+                        <h5 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">${escapeHtml(q.title)}</h5>
+                    </div>
+                    ${markedDetailsHtml}
+                `;
+                content.appendChild(qCard);
+            });
+        }
+
+        // =========================================================================
+        // SUB-VISTA 2: RESUMEN ESTADÍSTICO Y TABLAS DE FRECUENCIA (fi, hi%)
+        // =========================================================================
+        function renderSummaryCharts() {
+            const container = document.getElementById('responsesSummaryContainer');
+            container.innerHTML = '';
+            const totalResp = surveyState.responses.length || 1;
+
+            surveyState.questions.forEach(q => {
+                if (q.type === 'section') return;
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 shadow-sm space-y-4";
+
+                const counts = {};
+                if (q.type === 'multiple') {
+                    (q.options || []).forEach(o => counts[o] = 0);
+                    surveyState.responses.forEach(r => {
+                        const v = r.answers[q.id];
+                        if (v !== undefined) counts[v] = (counts[v] || 0) + 1;
+                    });
+                } else if (q.type === 'scale') {
+                    for (let n = 1; n <= 10; n++) counts[`Nivel ${n}`] = 0;
+                    surveyState.responses.forEach(r => {
+                        const v = r.answers[q.id];
+                        if (v) counts[`Nivel ${v}`] = (counts[`Nivel ${v}`] || 0) + 1;
+                    });
+                } else if (q.id === 'q_2') {
+                    // Agrupar Edad por Rango de Edad como en la hoja de Tablas de Frecuencia del Excel
+                    ["17-20", "21-24", "24-30", "30-33"].forEach(rng => counts[rng] = 0);
+                    surveyState.responses.forEach(r => {
+                        const rng = rangoDe(r.answers);
+                        counts[rng] = (counts[rng] || 0) + 1;
+                    });
+                } else {
+                    surveyState.responses.forEach(r => {
+                        const v = r.answers[q.id] ? `${r.answers[q.id]} ${q.unitSuffix || ''}` : 'Sin dato';
+                        counts[v] = (counts[v] || 0) + 1;
+                    });
+                }
+
+                const rowsHtml = Object.entries(counts).map(([cat, fi]) => {
+                    const hiPct = ((fi / totalResp) * 100).toFixed(1);
+                    return `
+                        <tr class="border-b border-slate-100 dark:border-slate-800">
+                            <td class="py-2 pr-3 font-medium text-slate-700 dark:text-slate-200">${escapeHtml(cat)}</td>
+                            <td class="py-2 px-3 text-center font-bold">${fi}</td>
+                            <td class="py-2 px-3 text-center font-bold text-rose-600 dark:text-rose-400">${hiPct}%</td>
+                            <td class="py-2 pl-3 w-1/3">
+                                <div class="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div class="h-full accent-bg rounded-full" style="width: ${hiPct}%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <h3 class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">${escapeHtml(q.title)}</h3>
+                        <span class="text-xs font-bold text-slate-400">n = ${surveyState.responses.length}</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead>
+                                <tr class="text-slate-400 uppercase border-b border-slate-200 dark:border-slate-700">
+                                    <th class="pb-2">Categoría / Opción</th>
+                                    <th class="pb-2 text-center">Frecuencia (fi)</th>
+                                    <th class="pb-2 text-center">Porcentaje (hi%)</th>
+                                    <th class="pb-2">Distribución</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rowsHtml}</tbody>
+                        </table>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // =========================================================================
+        // SUB-VISTA 3: TABLA COMPLETA ESTILO EXCEL (197 FILAS)
+        // =========================================================================
+        function renderSpreadsheetTable(filterText = '') {
+            const thead = document.getElementById('spreadsheetTableHead');
+            const tbody = document.getElementById('spreadsheetTableBody');
+            const q = filterText.toLowerCase().trim();
+
+            thead.innerHTML = `
+                <tr>
+                    <th class="p-3 border-b dark:border-slate-700">N°</th>
+                    <th class="p-3 border-b dark:border-slate-700">Registro</th>
+                    <th class="p-3 border-b dark:border-slate-700">Facultad</th>
+                    <th class="p-3 border-b dark:border-slate-700">Rango Edad</th>
+                    <th class="p-3 border-b dark:border-slate-700">Edad</th>
+                    <th class="p-3 border-b dark:border-slate-700">Ciclo Académico</th>
+                    <th class="p-3 border-b dark:border-slate-700">Calidad Enseñanza</th>
+                    <th class="p-3 border-b dark:border-slate-700">¿Prepara Laboral?</th>
+                    <th class="p-3 border-b dark:border-slate-700">Satisfacción (1-10)</th>
+                    <th class="p-3 border-b dark:border-slate-700">Ciclo Inicio AutoCAD</th>
+                    <th class="p-3 border-b dark:border-slate-700">Frec. Problemas</th>
+                    <th class="p-3 border-b dark:border-slate-700">N° Cursos</th>
+                    <th class="p-3 border-b dark:border-slate-700">Tipo Máquina</th>
+                    <th class="p-3 border-b dark:border-slate-700">Motivo de Uso</th>
+                </tr>
+            `;
+
+            const rowsHtml = [];
+            surveyState.responses.forEach((r, idx) => {
+                const a = r.answers;
+                const rango = rangoDe(a);
+                const rowString = `${idx + 1} respuesta ${idx + 1} ${a['q_1']} ${rango} ${a['q_2']} ${a['q_3']} ${a['q_4']} ${a['q_5']} ${a['q_10']} ${a['q_11']}`.toLowerCase();
+                if (q && !rowString.includes(q)) return;
+
+                rowsHtml.push(`
+                    <tr onclick="switchResponseSubTab('individual'); selectIndividualResponse(${idx})" class="hover:bg-rose-50/60 dark:hover:bg-slate-800/60 cursor-pointer transition">
+                        <td class="p-3 font-bold text-slate-400">${idx + 1}</td>
+                        <td class="p-3 font-extrabold accent-text whitespace-nowrap">Respuesta ${idx + 1}</td>
+                        <td class="p-3 whitespace-nowrap font-medium">${escapeHtml(a['q_1'] || '')}</td>
+                        <td class="p-3 whitespace-nowrap">${escapeHtml(rango)}</td>
+                        <td class="p-3 text-center font-bold">${escapeHtml(a['q_2'] || '')}</td>
+                        <td class="p-3 whitespace-nowrap">${escapeHtml(a['q_3'] || '')}</td>
+                        <td class="p-3 whitespace-nowrap">${escapeHtml(a['q_4'] || '')}</td>
+                        <td class="p-3 text-center font-bold">${escapeHtml(a['q_5'] || '')}</td>
+                        <td class="p-3 text-center font-extrabold text-emerald-600">${escapeHtml(a['q_6'] || '')}</td>
+                        <td class="p-3 whitespace-nowrap">${escapeHtml(a['q_7'] || '')}</td>
+                        <td class="p-3 whitespace-nowrap">${escapeHtml(a['q_8'] || '')}</td>
+                        <td class="p-3 text-center font-bold">${escapeHtml(a['q_9'] || '')}</td>
+                        <td class="p-3 whitespace-nowrap">${escapeHtml(a['q_10'] || '')}</td>
+                        <td class="p-3 whitespace-nowrap">${escapeHtml(a['q_11'] || '')}</td>
+                    </tr>
+                `);
+            });
+
+            tbody.innerHTML = rowsHtml.join('');
+        }
+
+        // =========================================================================
+        // 4. EXPORTACIÓN DIRECTA A EXCEL (.XLSX) CON TODAS LAS 197 RESPUESTAS
+        // =========================================================================
+        function exportToExcelWorkbook() {
+            if (typeof XLSX === 'undefined') {
+                exportResponsesToCSV();
+                return;
+            }
+
+            // Hoja 1: Base de Datos (idéntica a la primera hoja de tu Excel)
+            const dbHeader = [
+                "N°",
+                "Identificador",
+                "Facultad",
+                "Rango de Edad",
+                "Edad",
+                "Ciclo Académico",
+                "Calidad de Enseñanza",
+                "¿AutoCAD prepara para el entorno laboral?",
+                "Nivel de Satisfacción General (1-10)",
+                "Ciclo de Inicio de uso de AutoCAD",
+                "Frecuencia de Problemas",
+                "N° Cursos/Talleres de AutoCAD",
+                "Tipo de Máquina",
+                "Motivo de Uso"
+            ];
+
+            const dbRows = surveyState.responses.map((r, i) => {
+                const a = r.answers;
+                return [
+                    i + 1,
+                    `Respuesta ${i + 1}`,
+                    a['q_1'] || '',
+                    rangoDe(a),
+                    Number(a['q_2'] || 0),
+                    a['q_3'] || '',
+                    a['q_4'] || '',
+                    a['q_5'] || '',
+                    Number(a['q_6'] || 0),
+                    a['q_7'] || '',
+                    a['q_8'] || '',
+                    Number(a['q_9'] || 0),
+                    a['q_10'] || '',
+                    a['q_11'] || ''
+                ];
+            });
+
+            const wsBaseDatos = XLSX.utils.aoa_to_sheet([
+                ["BASE DE DATOS — ENCUESTA: IMPORTANCIA Y SATISFACCIÓN DEL USO DE AUTOCAD EN ESTUDIANTES DE INGENIERÍA DE LA UTP"],
+                ["Universidad Tecnológica del Perú · Sección 39452 · Estudiante: Josué Nathanael Santos Ruíz · n = " + surveyState.responses.length + " encuestados"],
+                [],
+                dbHeader,
+                ...dbRows
+            ]);
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, wsBaseDatos, "Base de Datos");
+
+            saveFileOut("BaseDatos_AutoCAD_UTP_Respuestas.xlsx", XLSX.write(wb, { bookType: "xlsx", type: "array" })).then(ok => ok && showToast("Archivo Excel descargado"));
+        }
+
+        function exportResponsesToCSV() {
+            const headers = ["N°", "Registro", "Facultad", "Rango de Edad", "Edad", "Ciclo Académico", "Calidad de Enseñanza", "Prepara Entorno Laboral", "Satisfacción (1-10)", "Ciclo Inicio AutoCAD", "Frecuencia Problemas", "Cursos Tomados", "Tipo de Máquina", "Motivo de Uso"];
+            const rows = surveyState.responses.map((r, i) => {
+                const a = r.answers;
+                const cols = [
+                    i + 1,
+                    `Respuesta ${i + 1}`,
+                    a['q_1'] || '',
+                    rangoDe(a),
+                    a['q_2'] || '',
+                    a['q_3'] || '',
+                    a['q_4'] || '',
+                    a['q_5'] || '',
+                    a['q_6'] || '',
+                    a['q_7'] || '',
+                    a['q_8'] || '',
+                    a['q_9'] || '',
+                    a['q_10'] || '',
+                    a['q_11'] || ''
+                ];
+                return cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',');
+            });
+
+            const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            saveFileOut("BaseDatos_AutoCAD_UTP.csv", blob).then(ok => ok && showToast("Archivo CSV descargado"));
+            
+        }
+
+        // =========================================================================
+        // UTILIDADES Y MODO OSCURO
+        // =========================================================================
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function escapeHtml(str) {
+            if (typeof str !== 'string') return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const isError = type === 'error';
+            toast.className = `px-4 py-3 rounded-xl shadow-lg border text-xs font-bold flex items-center gap-2.5 animate-card pointer-events-auto ${
+                isError ? 'bg-rose-600 text-white border-rose-500' : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-700'
+            }`;
+            toast.innerHTML = `
+                <i class="fa-solid ${isError ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400 dark:text-emerald-600'}"></i>
+                <span>${escapeHtml(message)}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.25s ease';
+                setTimeout(() => toast.remove(), 250);
+            }, 2800);
+        }
+    </script>
+</body>
+</html>
